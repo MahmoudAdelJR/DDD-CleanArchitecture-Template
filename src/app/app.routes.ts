@@ -8,8 +8,7 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'customers' },
   {
     path: 'login',
-    loadChildren: () =>
-      import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
+    loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
     path: '',
@@ -19,15 +18,15 @@ export const routes: Routes = [
       {
         path: 'customers',
         loadChildren: () =>
-          import('./features/customers/customers.routes').then(m => m.CUSTOMERS_ROUTES)
+          import('./features/customers/customers.routes').then((m) => m.CUSTOMERS_ROUTES),
       },
       {
         path: 'profile',
         loadChildren: () =>
-          import('./features/identity/identity.routes').then(m => m.IDENTITY_ROUTES)
+          import('./features/identity/identity.routes').then((m) => m.IDENTITY_ROUTES),
       },
-      { path: 'forbidden', component: ForbiddenPageComponent }
-    ]
+      { path: 'forbidden', component: ForbiddenPageComponent },
+    ],
   },
-  { path: '**', component: NotFoundPageComponent }
+  { path: '**', component: NotFoundPageComponent },
 ];

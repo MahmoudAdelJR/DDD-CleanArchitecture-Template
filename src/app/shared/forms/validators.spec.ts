@@ -24,7 +24,7 @@ describe('matchingFields', () => {
   it('requires the sibling control to have the same value', () => {
     const group = new FormGroup({
       password: new FormControl('secret'),
-      confirm: new FormControl('')
+      confirm: new FormControl(''),
     });
     group.controls['confirm'].addValidators(matchingFields('password'));
     group.controls['confirm'].updateValueAndValidity();
@@ -41,9 +41,9 @@ describe('dateRange', () => {
     const group = new FormGroup(
       {
         start: new FormControl('2024-05-10'),
-        end: new FormControl('2024-05-01')
+        end: new FormControl('2024-05-01'),
       },
-      [dateRange('start', 'end')]
+      [dateRange('start', 'end')],
     );
 
     expect(group.hasError('invalidDateRange')).toBeTrue();

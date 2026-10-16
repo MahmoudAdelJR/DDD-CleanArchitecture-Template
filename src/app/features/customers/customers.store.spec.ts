@@ -10,8 +10,8 @@ describe('CustomersStore', () => {
       providers: [
         CustomersStore,
         { provide: CUSTOMER_REPOSITORY, useClass: InMemoryCustomerRepository },
-        provideZonelessChangeDetection()
-      ]
+        provideZonelessChangeDetection(),
+      ],
     });
   });
 
@@ -37,7 +37,7 @@ describe('CustomersStore', () => {
 
     const state = store.state();
     expect(state.result?.totalCount).toBe(2);
-    expect(state.result?.items.every(c => c.city.toLowerCase() === 'new york')).toBeTrue();
+    expect(state.result?.items.every((c) => c.city.toLowerCase() === 'new york')).toBeTrue();
   });
 
   it('clamps the requested page to the available range', async () => {
@@ -54,7 +54,7 @@ describe('CustomersStore', () => {
 
   async function waitForReady(store: CustomersStore): Promise<void> {
     while (store.state().status === 'loading') {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
 });

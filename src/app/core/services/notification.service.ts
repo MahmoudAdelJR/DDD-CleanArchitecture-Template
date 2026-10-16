@@ -16,7 +16,7 @@ const AUTO_DISMISS_MS: Record<NotificationType, number> = {
   info: 6_000,
   success: 6_000,
   warning: 8_000,
-  error: 12_000
+  error: 12_000,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -30,17 +30,14 @@ export class NotificationService {
 
   constructor() {
     this.destroyRef.onDestroy(() => {
-      this.timers.forEach(timer => clearTimeout(timer));
+      this.timers.forEach((timer) => clearTimeout(timer));
       this.timers.clear();
     });
   }
 
   show(notification: Omit<AppNotification, 'id'>): number {
     const id = this.nextId++;
-    this._notifications.update(current => [
-      ...current.slice(-4),
-      { ...notification, id }
-    ]);
+    this._notifications.update((current) => [...current.slice(-4), { ...notification, id }]);
 
     const timer = setTimeout(() => this.dismiss(id), AUTO_DISMISS_MS[notification.type]);
     this.timers.set(id, timer);
@@ -53,7 +50,7 @@ export class NotificationService {
       clearTimeout(timer);
       this.timers.delete(id);
     }
-    this._notifications.update(current => current.filter(item => item.id !== id));
+    this._notifications.update((current) => current.filter((item) => item.id !== id));
   }
 
   success(message: string, title?: string): void {

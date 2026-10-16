@@ -12,6 +12,6 @@ export function provideAuthDataAccess(): Provider[] {
   return [
     FakeAuthenticationAdapter,
     { provide: AUTHENTICATION_PORT, useExisting: FakeAuthenticationAdapter },
-    { provide: SESSION_REFRESH_PORT, useExisting: FakeAuthenticationAdapter }
+    { provide: SESSION_REFRESH_PORT, useExisting: FakeAuthenticationAdapter },
   ];
 }

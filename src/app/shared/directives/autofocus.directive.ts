@@ -5,10 +5,10 @@ import { Directive, ElementRef, effect, inject, input } from '@angular/core';
  * [appAutofocus]="false" for dialogs or flows with their own focus handling.
  */
 @Directive({
-  selector: '[appAutofocus]'
+  selector: '[appAutofocus]',
 })
 export class AutofocusDirective {
-  readonly appAutofocus = input(true, { alias: 'appAutofocus' });
+  readonly appAutofocus = input(true);
 
   private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private applied = false;

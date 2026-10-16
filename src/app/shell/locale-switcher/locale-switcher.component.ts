@@ -30,7 +30,7 @@ import { TranslatePipe } from '../../shared/i18n/translate.pipe';
       font: inherit;
       font-size: 0.9rem;
     }
-  `
+  `,
 })
 export class LocaleSwitcherComponent {
   protected readonly translation = inject(TRANSLATION);

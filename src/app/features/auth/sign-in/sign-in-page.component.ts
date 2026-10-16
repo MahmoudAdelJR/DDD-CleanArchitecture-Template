@@ -11,7 +11,7 @@ import { SignInStore } from './sign-in.store';
   selector: 'app-sign-in-page',
   imports: [ReactiveFormsModule, AutofocusDirective, FieldErrorComponent, TranslatePipe],
   templateUrl: './sign-in-page.component.html',
-  styleUrl: './sign-in-page.component.scss'
+  styleUrl: './sign-in-page.component.scss',
 })
 export class SignInPageComponent {
   private readonly store = inject(SignInStore);
@@ -25,7 +25,7 @@ export class SignInPageComponent {
 
   protected readonly form = this.fb.group({
     email: ['', [trimmedRequired(), Validators.email]],
-    password: ['', trimmedRequired()]
+    password: ['', trimmedRequired()],
   });
 
   protected async submit(): Promise<void> {
@@ -37,7 +37,7 @@ export class SignInPageComponent {
 
     const success = await this.store.submit({
       email: this.form.controls.email.value!.trim(),
-      password: this.form.controls.password.value!
+      password: this.form.controls.password.value!,
     });
 
     if (success) {

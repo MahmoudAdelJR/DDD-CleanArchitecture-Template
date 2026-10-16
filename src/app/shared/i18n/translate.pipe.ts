@@ -7,7 +7,7 @@ import { TRANSLATION } from './translation.port';
  */
 @Pipe({
   name: 'tr',
-  pure: false
+  pure: false,
 })
 export class TranslatePipe implements PipeTransform {
   private readonly translation = inject(TRANSLATION);

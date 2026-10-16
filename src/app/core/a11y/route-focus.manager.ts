@@ -24,9 +24,9 @@ export class RouteFocusManager {
     const subscription = this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-        filter(event => event.urlAfterRedirects !== this.lastUrl)
+        filter((event) => event.urlAfterRedirects !== this.lastUrl),
       )
-      .subscribe(event => {
+      .subscribe((event) => {
         this.lastUrl = event.urlAfterRedirects;
         this.focusMain();
       });

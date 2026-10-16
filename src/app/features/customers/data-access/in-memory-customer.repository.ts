@@ -12,7 +12,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'San Diego',
     status: 'active',
     createdAt: '2024-01-12',
-    notes: 'Road-runner acquisition program.'
+    notes: 'Road-runner acquisition program.',
   },
   {
     id: 'c2',
@@ -22,7 +22,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Bedrock',
     status: 'active',
     createdAt: '2024-02-03',
-    notes: 'Interested in the flying car pilot.'
+    notes: 'Interested in the flying car pilot.',
   },
   {
     id: 'c3',
@@ -32,7 +32,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Austin',
     status: 'inactive',
     createdAt: '2023-11-21',
-    notes: 'Contract expired after the TPS rewrite.'
+    notes: 'Contract expired after the TPS rewrite.',
   },
   {
     id: 'c4',
@@ -42,7 +42,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Raccoon City',
     status: 'active',
     createdAt: '2023-08-30',
-    notes: 'Cold-chain specialists.'
+    notes: 'Cold-chain specialists.',
   },
   {
     id: 'c5',
@@ -52,7 +52,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'New York',
     status: 'active',
     createdAt: '2025-03-15',
-    notes: 'Premium tier account.'
+    notes: 'Premium tier account.',
   },
   {
     id: 'c6',
@@ -62,7 +62,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Gotham City',
     status: 'active',
     createdAt: '2025-05-02',
-    notes: 'R&D partnership under negotiation.'
+    notes: 'R&D partnership under negotiation.',
   },
   {
     id: 'c7',
@@ -72,7 +72,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'New York',
     status: 'inactive',
     createdAt: '2022-12-01',
-    notes: 'Dormant since the product recall.'
+    notes: 'Dormant since the product recall.',
   },
   {
     id: 'c8',
@@ -82,7 +82,7 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Los Angeles',
     status: 'active',
     createdAt: '2024-07-19',
-    notes: 'Automated fab integration project.'
+    notes: 'Automated fab integration project.',
   },
   {
     id: 'c9',
@@ -92,8 +92,8 @@ const CUSTOMERS: CustomerDetails[] = [
     city: 'Palo Alto',
     status: 'active',
     createdAt: '2024-09-08',
-    notes: 'Magic Eight ball pilot on hold.'
-  }
+    notes: 'Magic Eight ball pilot on hold.',
+  },
 ];
 
 const LATENCY_MS = 250;
@@ -105,11 +105,11 @@ export class InMemoryCustomerRepository implements CustomerRepository {
 
     const term = query.search.trim().toLowerCase();
     const filtered = term
-      ? CUSTOMERS.filter(customer =>
+      ? CUSTOMERS.filter((customer) =>
           [customer.company, customer.contactName, customer.email, customer.city]
             .join(' ')
             .toLowerCase()
-            .includes(term)
+            .includes(term),
         )
       : CUSTOMERS;
 
@@ -119,20 +119,20 @@ export class InMemoryCustomerRepository implements CustomerRepository {
     const start = (page - 1) * query.pageSize;
 
     return {
-      items: filtered.slice(start, start + query.pageSize),
+      items: filtered.slice(start, start + query.pageSize).map(toSummary),
       pageNumber: page,
       pageSize: query.pageSize,
       totalCount,
       totalPages,
       hasPreviousPage: page > 1,
-      hasNextPage: page < totalPages
+      hasNextPage: page < totalPages,
     };
   }
 
   async findById(id: string): Promise<CustomerDetails> {
     await this.simulateLatency();
 
-    const customer = CUSTOMERS.find(candidate => candidate.id === id);
+    const customer = CUSTOMERS.find((candidate) => candidate.id === id);
     if (!customer) {
       throw new CustomerNotFoundError(id);
     }
@@ -141,6 +141,12 @@ export class InMemoryCustomerRepository implements CustomerRepository {
   }
 
   private simulateLatency(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, LATENCY_MS));
+    return new Promise((resolve) => setTimeout(resolve, LATENCY_MS));
   }
+}
+
+/** Strips detail-only fields so list responses match the summary contract. */
+function toSummary(customer: CustomerDetails): CustomerSummary {
+  const { notes: _notes, ...summary } = customer;
+  return summary;
 }

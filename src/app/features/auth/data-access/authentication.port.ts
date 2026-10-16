@@ -4,7 +4,7 @@ import type { AuthenticatedSession, SignInCredentials } from '../sign-in/sign-in
 export class SignInFailure extends Error {
   constructor(
     readonly code: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'SignInFailure';
@@ -16,5 +16,5 @@ export interface AuthenticationPort {
 }
 
 export const AUTHENTICATION_PORT = new InjectionToken<AuthenticationPort>(
-  'auth.AuthenticationPort'
+  'auth.AuthenticationPort',
 );

@@ -9,7 +9,7 @@ const CONFIG: AppConfig = {
   apiBaseUrl: '/api',
   trustedOrigins: [],
   supportedLocales: ['en', 'fr'],
-  defaultLocale: 'en'
+  defaultLocale: 'en',
 };
 
 describe('LocaleService', () => {
@@ -21,8 +21,8 @@ describe('LocaleService', () => {
         LocaleService,
         provideZonelessChangeDetection(),
         { provide: APP_CONFIG, useValue: CONFIG },
-        { provide: STORAGE, useClass: MemoryStorage }
-      ]
+        { provide: STORAGE, useClass: MemoryStorage },
+      ],
     });
 
     storage = TestBed.inject(STORAGE) as MemoryStorage;

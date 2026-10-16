@@ -6,14 +6,14 @@ import { TranslatePipe } from './translate.pipe';
 @Component({
   standalone: true,
   imports: [TranslatePipe],
-  template: `<span id="out">{{ 'test.greeting' | tr: { name: 'Ada' } }}</span>`
+  template: `<span id="out">{{ 'test.greeting' | tr: { name: 'Ada' } }}</span>`,
 })
 class HostComponent {}
 
 function fakeTranslation(initial = 'en'): TranslationPort {
   const dictionaries: Record<string, Record<string, string>> = {
     en: { 'test.greeting': 'Hello, {name}!' },
-    fr: { 'test.greeting': 'Bonjour, {name} !' }
+    fr: { 'test.greeting': 'Bonjour, {name} !' },
   };
   let locale = initial;
 
@@ -28,7 +28,7 @@ function fakeTranslation(initial = 'en'): TranslationPort {
     },
     setLocale: (l: string) => {
       locale = l;
-    }
+    },
   };
 }
 
@@ -37,8 +37,8 @@ describe('TranslatePipe', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: TRANSLATION, useValue: translation }
-      ]
+        { provide: TRANSLATION, useValue: translation },
+      ],
     });
 
     return TestBed.runInInjectionContext(() => new TranslatePipe());
@@ -66,8 +66,8 @@ describe('TranslatePipe', () => {
       imports: [HostComponent],
       providers: [
         provideZonelessChangeDetection(),
-        { provide: TRANSLATION, useValue: translation }
-      ]
+        { provide: TRANSLATION, useValue: translation },
+      ],
     });
 
     const fixture = TestBed.createComponent(HostComponent);

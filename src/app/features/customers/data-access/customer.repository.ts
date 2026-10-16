@@ -15,5 +15,5 @@ export interface CustomerRepository {
 }
 
 export const CUSTOMER_REPOSITORY = new InjectionToken<CustomerRepository>(
-  'customers.CustomerRepository'
+  'customers.CustomerRepository',
 );

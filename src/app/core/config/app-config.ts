@@ -13,7 +13,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   apiBaseUrl: '/api',
   trustedOrigins: [],
   supportedLocales: ['en', 'fr'],
-  defaultLocale: 'en'
+  defaultLocale: 'en',
 };
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('core.AppConfig');
@@ -41,7 +41,7 @@ export function validateAppConfig(config: AppConfig): void {
 
     if (parsed.origin !== origin) {
       throw new Error(
-        `AppConfig.trustedOrigins entries must be bare origins (e.g. "https://api.example.com"), got "${origin}".`
+        `AppConfig.trustedOrigins entries must be bare origins (e.g. "https://api.example.com"), got "${origin}".`,
       );
     }
   }

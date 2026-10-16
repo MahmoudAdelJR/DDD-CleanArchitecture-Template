@@ -9,7 +9,7 @@ import { LocaleSwitcherComponent } from '../locale-switcher/locale-switcher.comp
   selector: 'app-authenticated-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LocaleSwitcherComponent, TranslatePipe],
   templateUrl: './authenticated-layout.component.html',
-  styleUrl: './authenticated-layout.component.scss'
+  styleUrl: './authenticated-layout.component.scss',
 })
 export class AuthenticatedLayoutComponent {
   private readonly authSession = inject(AuthSessionService);
@@ -23,6 +23,6 @@ export class AuthenticatedLayoutComponent {
 
   protected signOut(): void {
     this.authSession.clearSession();
-    this.router.navigateByUrl('/login');
+    void this.router.navigateByUrl('/login');
   }
 }

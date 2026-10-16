@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export type MessageResolver = (
   key: string,
   params: Record<string, string | number> | undefined,
-  fallback: string
+  fallback: string,
 ) => string;
 
 /** RFC 7807 / ASP.NET ProblemDetails envelope (all fields optional by spec). */
@@ -24,7 +24,7 @@ export class ApiError {
     readonly code: string | null,
     readonly validationErrors: Record<string, string[]>,
     readonly correlationId: string | null,
-    readonly httpError: HttpErrorResponse
+    readonly httpError: HttpErrorResponse,
   ) {}
 }
 
@@ -38,12 +38,12 @@ const DEFAULT_MESSAGES: Record<number | string, string> = {
   422: 'The submitted data failed validation. Please review the form.',
   429: 'Too many requests. Please wait a moment and try again.',
   500: 'The server encountered an unexpected error.',
-  generic: 'The request failed.'
+  generic: 'The request failed.',
 };
 
 export function normalizeApiError(
   response: HttpErrorResponse,
-  resolveMessage?: MessageResolver
+  resolveMessage?: MessageResolver,
 ): ApiError {
   const t: MessageResolver = resolveMessage
     ? resolveMessage
@@ -52,14 +52,16 @@ export function normalizeApiError(
   const body = parseProblemDetails(response.error);
   const validationErrors = extractValidationErrors(body);
   const correlationId =
-    body?.traceId ?? response.headers.get('x-correlation-id') ?? response.headers.get('traceparent');
+    body?.traceId ??
+    response.headers.get('x-correlation-id') ??
+    response.headers.get('traceparent');
   const code = body?.code ?? (body?.type ? lastUrlSegment(body.type) : null);
 
   const statusFallback =
     response.status === 0
       ? DEFAULT_MESSAGES[0]
-      : DEFAULT_MESSAGES[response.status] ??
-        (response.status >= 500 ? DEFAULT_MESSAGES[500] : DEFAULT_MESSAGES['generic']);
+      : (DEFAULT_MESSAGES[response.status] ??
+        (response.status >= 500 ? DEFAULT_MESSAGES[500] : DEFAULT_MESSAGES['generic']));
 
   const message =
     flattenValidationMessages(validationErrors) ??
@@ -68,19 +70,24 @@ export function normalizeApiError(
     body?.title ??
     t(`http.${response.status}`, undefined, statusFallback);
 
-  return new ApiError(response.status, message, code ?? null, validationErrors, correlationId, response);
+  return new ApiError(
+    response.status,
+    message,
+    code ?? null,
+    validationErrors,
+    correlationId,
+    response,
+  );
 }
 
 function parseProblemDetails(error: unknown): ProblemDetailsBody | null {
   if (error && typeof error === 'object' && !Array.isArray(error)) {
-    return error as ProblemDetailsBody;
+    return error;
   }
   return null;
 }
 
-function extractValidationErrors(
-  body: ProblemDetailsBody | null
-): Record<string, string[]> {
+function extractValidationErrors(body: ProblemDetailsBody | null): Record<string, string[]> {
   if (!body?.errors) {
     return {};
   }
@@ -101,7 +108,7 @@ function extractValidationErrors(
   // ASP.NET Identity shape: { Field: ["msg", ...], general: "msg" }
   for (const [key, value] of Object.entries(body.errors)) {
     const messages = Array.isArray(value) ? value : [value];
-    result[key] = messages.filter(message => typeof message === 'string' && message.length > 0);
+    result[key] = messages.filter((message) => typeof message === 'string' && message.length > 0);
   }
   return result;
 }

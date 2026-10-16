@@ -10,10 +10,10 @@ export class PermissionService {
   }
 
   hasAnyPermission(permissions: readonly string[]): boolean {
-    return permissions.some(permission => this.hasPermission(permission));
+    return permissions.some((permission) => this.hasPermission(permission));
   }
 
   hasAllPermissions(permissions: readonly string[]): boolean {
-    return permissions.every(permission => this.hasPermission(permission));
+    return permissions.every((permission) => this.hasPermission(permission));
   }
 }

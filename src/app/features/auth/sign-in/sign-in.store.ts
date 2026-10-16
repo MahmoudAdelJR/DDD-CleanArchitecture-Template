@@ -37,8 +37,7 @@ export class SignInStore {
   }
 
   private toUserMessage(error: unknown): string {
-    const fallback =
-      error instanceof SignInFailure ? error.message : GENERIC_FAILURE;
+    const fallback = error instanceof SignInFailure ? error.message : GENERIC_FAILURE;
 
     if (!this.translation) {
       return fallback;

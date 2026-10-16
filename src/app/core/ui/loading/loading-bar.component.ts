@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { LoadingService } from '../../services/loading.service';
 
 /**
@@ -27,7 +34,12 @@ import { LoadingService } from '../../services/loading.service';
 
     .loading-bar__track {
       height: 3px;
-      background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary) 40%, transparent 40%);
+      background: linear-gradient(
+        90deg,
+        var(--color-primary) 0%,
+        var(--color-primary) 40%,
+        transparent 40%
+      );
       background-size: 250% 100%;
       animation: loading-slide 1.1s linear infinite;
     }
@@ -47,7 +59,7 @@ import { LoadingService } from '../../services/loading.service';
         background: var(--color-primary);
       }
     }
-  `
+  `,
 })
 export class LoadingBarComponent {
   private readonly loading = inject(LoadingService);

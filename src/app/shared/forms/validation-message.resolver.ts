@@ -6,7 +6,7 @@ const identityTranslation: TranslationPort = {
   locale: () => 'en',
   supportedLocales: () => ['en'],
   translate: (key, _params, fallback) => fallback ?? key,
-  setLocale: () => {}
+  setLocale: () => {},
 };
 
 /**
@@ -44,14 +44,14 @@ export class ValidationMessageResolver {
         case 'minlength': {
           const actual = value as { requiredLength: number };
           out.push(
-            this.translation.translate('validation.minlength', { min: actual.requiredLength })
+            this.translation.translate('validation.minlength', { min: actual.requiredLength }),
           );
           break;
         }
         case 'maxlength': {
           const actual = value as { requiredLength: number };
           out.push(
-            this.translation.translate('validation.maxlength', { max: actual.requiredLength })
+            this.translation.translate('validation.maxlength', { max: actual.requiredLength }),
           );
           break;
         }

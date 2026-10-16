@@ -11,5 +11,5 @@ export interface SessionRefreshPort {
 }
 
 export const SESSION_REFRESH_PORT = new InjectionToken<SessionRefreshPort>(
-  'core.SessionRefreshPort'
+  'core.SessionRefreshPort',
 );

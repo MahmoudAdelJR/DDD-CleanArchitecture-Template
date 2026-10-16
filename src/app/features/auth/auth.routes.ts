@@ -7,6 +7,6 @@ export const AUTH_ROUTES: Routes = [
   {
     path: '',
     component: SignInPageComponent,
-    providers: [SignInStore, SignInUseCase]
-  }
+    providers: [SignInStore, SignInUseCase],
+  },
 ];

@@ -18,9 +18,9 @@ describe('RouteFocusManager', () => {
         provideZonelessChangeDetection(),
         provideRouter([
           { path: 'a', component: PageAComponent },
-          { path: 'b', component: PageBComponent }
-        ])
-      ]
+          { path: 'b', component: PageBComponent },
+        ]),
+      ],
     });
 
     document.body.insertAdjacentHTML('afterbegin', '<main id="main"></main>');

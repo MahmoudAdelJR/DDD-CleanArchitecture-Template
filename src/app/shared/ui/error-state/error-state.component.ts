@@ -36,7 +36,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
       margin: 0;
       color: var(--color-danger);
     }
-  `
+  `,
 })
 export class ErrorStateComponent {
   readonly message = input.required<string>();

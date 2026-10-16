@@ -1,12 +1,26 @@
 {
   "name": "ddd-clean-architecture-template",
   "version": "0.0.0",
+  "engines": {
+    "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
+  },
+  "packageManager": "npm@11.17.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --browsers=ChromeHeadless --code-coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json && tsc --noEmit -p e2e/tsconfig.json",
+    "format": "prettier --write \"./{src,e2e,deploy,docs,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
+    "format:check": "prettier --check \"./{src,e2e,deploy,docs,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report",
+    "audit:ci": "npm audit --omit=dev --audit-level=high",
+    "audit:gate": "node scripts/audit-allowlist.mjs"
   },
   "prettier": {
     "printWidth": 100,
@@ -22,26 +36,34 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/common": "^20.2.0",
-    "@angular/compiler": "^20.2.0",
-    "@angular/core": "^20.2.0",
-    "@angular/forms": "^20.2.0",
-    "@angular/platform-browser": "^20.2.0",
-    "@angular/router": "^20.2.0",
+    "@angular/common": "^20.3.34",
+    "@angular/compiler": "^20.3.34",
+    "@angular/core": "^20.3.34",
+    "@angular/forms": "^20.3.34",
+    "@angular/platform-browser": "^20.3.34",
+    "@angular/router": "^20.3.34",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^20.2.1",
-    "@angular/cli": "^20.2.1",
-    "@angular/compiler-cli": "^20.2.0",
+    "@angular-eslint/eslint-plugin": "^20.7.0",
+    "@angular-eslint/eslint-plugin-template": "^20.7.0",
+    "@angular-eslint/template-parser": "^20.7.0",
+    "@angular/build": "^20.3.34",
+    "@angular/cli": "^20.3.34",
+    "@angular/compiler-cli": "^20.3.34",
+    "@playwright/test": "^1.64.1",
     "@types/jasmine": "~5.1.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-import": "^2.32.0",
     "jasmine-core": "~5.9.0",
-    "karma": "~6.4.0",
+    "karma": "^6.4.4",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.9.2"
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.71.2"
   }
 }

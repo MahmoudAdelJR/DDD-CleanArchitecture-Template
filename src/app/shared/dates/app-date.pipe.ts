@@ -8,7 +8,7 @@ type Preset = 'short' | 'medium' | 'long';
 const PRESETS: Record<Preset, string> = {
   short: 'shortDate',
   medium: 'mediumDate',
-  long: 'longDate'
+  long: 'longDate',
 };
 
 /**
@@ -20,7 +20,7 @@ const PRESETS: Record<Preset, string> = {
 @Pipe({
   name: 'appDateFormat',
   // Re-evaluates on locale change (signal read inside transform).
-  pure: false
+  pure: false,
 })
 export class AppDatePipe implements PipeTransform {
   private readonly translation = inject(TRANSLATION);
@@ -32,9 +32,8 @@ export class AppDatePipe implements PipeTransform {
       return '';
     }
 
-    const calendarDate = typeof value === 'string' && isCalendarDateString(value)
-      ? toCalendarDate(value)
-      : null;
+    const calendarDate =
+      typeof value === 'string' && isCalendarDateString(value) ? toCalendarDate(value) : null;
     const resolved = calendarDate ?? value;
 
     return this.pipe().transform(resolved, PRESETS[preset] ?? preset) ?? '';

@@ -7,7 +7,7 @@ import { FieldErrorComponent } from './field-error.component';
 @Component({
   standalone: true,
   imports: [FieldErrorComponent],
-  template: `<app-field-error [control]="control" [show]="show" [label]="'Email'" />`
+  template: `<app-field-error [control]="control" [show]="show" [label]="'Email'" />`,
 })
 class HostComponent {
   control = new FormControl('', [Validators.required, Validators.email]);
@@ -20,8 +20,8 @@ describe('FieldErrorComponent', () => {
       imports: [HostComponent],
       providers: [
         provideZonelessChangeDetection(),
-        ...(translation ? [{ provide: TRANSLATION, useValue: translation }] : [])
-      ]
+        ...(translation ? [{ provide: TRANSLATION, useValue: translation }] : []),
+      ],
     });
     return TestBed.createComponent(HostComponent);
   }
@@ -40,7 +40,7 @@ describe('FieldErrorComponent', () => {
       supportedLocales: () => ['en'],
       translate: (key, params, fallback) =>
         key === 'validation.required' ? `${params?.['label']} is required.` : (fallback ?? key),
-      setLocale: () => {}
+      setLocale: () => {},
     };
 
     const fixture = setup(translation);
@@ -59,7 +59,7 @@ describe('FieldErrorComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.field-error').textContent).toContain(
-      'Name is taken.'
+      'Name is taken.',
     );
   });
 });

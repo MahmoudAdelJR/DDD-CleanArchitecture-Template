@@ -90,7 +90,7 @@ export class AuthSessionService {
     }
 
     this.inflightRefresh = this.performRefresh()
-      .then(refreshed => {
+      .then((refreshed) => {
         if (!refreshed) {
           this.clearSession();
         }

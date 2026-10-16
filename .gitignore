@@ -33,9 +33,21 @@ yarn-error.log
 .sass-cache/
 /connect.lock
 /coverage
+/coverage-ts
+/lcov.info
 /libpeerconnection.log
 testem.log
 /typings
+
+# Test artifacts
+/playwright-report
+/test-results
+/test-output.log
+
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
 
 # System files
 .DS_Store

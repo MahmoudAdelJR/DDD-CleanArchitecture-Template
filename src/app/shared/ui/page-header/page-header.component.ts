@@ -43,7 +43,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       flex-direction: column;
       gap: var(--space-1);
     }
-  `
+  `,
 })
 export class PageHeaderComponent {
   readonly title = input.required<string>();

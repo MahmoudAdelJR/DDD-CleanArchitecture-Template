@@ -11,10 +11,14 @@ const USER: AuthUser = {
   fullName: 'Ada Admin',
   email: 'admin@demo.local',
   permissions: ['customers.read'],
-  roles: ['admin']
+  roles: ['admin'],
 };
 
-function session(expiresAt: number | null, accessToken = 'token', refreshToken = 'refresh'): SessionPayload {
+function session(
+  expiresAt: number | null,
+  accessToken = 'token',
+  refreshToken = 'refresh',
+): SessionPayload {
   return { user: USER, accessToken, refreshToken, expiresAt };
 }
 
@@ -26,8 +30,8 @@ describe('AuthSessionService', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: STORAGE, useClass: MemoryStorage },
-        ...(refresher ? [{ provide: SESSION_REFRESH_PORT, useValue: refresher }] : [])
-      ]
+        ...(refresher ? [{ provide: SESSION_REFRESH_PORT, useValue: refresher }] : []),
+      ],
     });
     storage = TestBed.inject(STORAGE) as MemoryStorage;
     return TestBed.inject(AuthSessionService);
@@ -103,7 +107,7 @@ describe('AuthSessionService', () => {
     let resolveRefresh: (value: SessionPayload) => void = () => {};
     const refresh = jasmine
       .createSpy('refresh')
-      .and.returnValue(new Promise<SessionPayload>(resolve => (resolveRefresh = resolve)));
+      .and.returnValue(new Promise<SessionPayload>((resolve) => (resolveRefresh = resolve)));
     const service = setup({ refresh });
 
     service.setSession(session(Date.now() - 1, 'old', 'refresh-1'));

@@ -1,11 +1,4 @@
-import {
-  Directive,
-  effect,
-  inject,
-  input,
-  TemplateRef,
-  ViewContainerRef
-} from '@angular/core';
+import { Directive, effect, inject, input, TemplateRef, ViewContainerRef } from '@angular/core';
 import { PermissionService } from '../services/permission.service';
 
 /**
@@ -23,7 +16,7 @@ import { PermissionService } from '../services/permission.service';
  * UX control only: the server must still authorize every operation.
  */
 @Directive({
-  selector: '[appHasPermission]'
+  selector: '[appHasPermission]',
 })
 export class HasPermissionDirective {
   private readonly templateRef = inject(TemplateRef<unknown>);

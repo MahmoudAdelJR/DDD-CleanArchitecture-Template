@@ -30,13 +30,8 @@ export class LocaleService implements TranslationPort {
     return this.config.supportedLocales;
   }
 
-  translate(
-    key: string,
-    params?: Record<string, string | number>,
-    fallback?: string
-  ): string {
-    const entry =
-      this.lookup(this._locale(), key) ?? this.lookup(this.config.defaultLocale, key);
+  translate(key: string, params?: Record<string, string | number>, fallback?: string): string {
+    const entry = this.lookup(this._locale(), key) ?? this.lookup(this.config.defaultLocale, key);
 
     const template = entry ?? fallback ?? key;
     return params ? interpolate(template, params) : template;
@@ -69,13 +64,13 @@ export class LocaleService implements TranslationPort {
     const locale = this._locale();
     document.documentElement.lang = locale;
 
-    const prefix = locale.split(/[-_]/)[0]!;
+    const prefix = locale.split(/[-_]/)[0];
     document.documentElement.dir = RTL_LANGUAGE_PREFIXES.includes(prefix) ? 'rtl' : 'ltr';
   }
 }
 
 function interpolate(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-    Object.hasOwn(params, name) ? String(params[name]) : match
+    Object.hasOwn(params, name) ? String(params[name]) : match,
   );
 }

@@ -12,7 +12,7 @@ type DetailStatus = 'loading' | 'ready' | 'not-found' | 'error';
   selector: 'app-customer-detail-page',
   imports: [RouterLink, AppDatePipe, TranslatePipe, PageHeaderComponent],
   templateUrl: './customer-detail-page.component.html',
-  styleUrl: './customer-detail-page.component.scss'
+  styleUrl: './customer-detail-page.component.scss',
 })
 export class CustomerDetailPageComponent {
   private readonly repository = inject(CUSTOMER_REPOSITORY);

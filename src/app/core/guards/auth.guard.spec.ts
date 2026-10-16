@@ -7,7 +7,7 @@ import {
   Router,
   RouterStateSnapshot,
   UrlTree,
-  provideRouter
+  provideRouter,
 } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { AuthSessionService } from '../services/auth-session.service';
@@ -22,8 +22,8 @@ describe('authGuard', () => {
       providers: [
         provideRouter([]),
         provideZonelessChangeDetection(),
-        { provide: STORAGE, useClass: MemoryStorage }
-      ]
+        { provide: STORAGE, useClass: MemoryStorage },
+      ],
     });
     router = TestBed.inject(Router);
   });
@@ -39,7 +39,7 @@ describe('authGuard', () => {
     session.setSession({
       user: { id: '1', fullName: 'Test', email: 'test@example.com', permissions: [], roles: [] },
       accessToken: 'token',
-      expiresAt: null
+      expiresAt: null,
     });
 
     expect(activate('/customers')).toBe(true);

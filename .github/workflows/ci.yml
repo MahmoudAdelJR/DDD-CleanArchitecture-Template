@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install (clean, reproducible)
+        run: npm ci
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint (includes architecture boundary rules)
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests with coverage
+        run: npm run test:ci | tee test-output.log
+
+      - name: Coverage threshold gate (lines >= 80%)
+        run: |
+          PCT=$(grep -oE 'Lines[[:space:]]*:[[:space:]]*[0-9.]+' test-output.log | grep -oE '[0-9.]+$' | tail -n 1)
+          if [ -z "$PCT" ]; then
+            echo "No coverage summary found" >&2
+            exit 1
+          fi
+          echo "Line coverage: ${PCT}%"
+          awk -v p="$PCT" 'BEGIN { exit (p >= 80 ? 0 : 1) }'
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 7
+
+      - name: Production build (enforces bundle budgets)
+        run: npm run build
+
+      - name: Dependency audit (production must be clean; dev needs allowlisted advisories)
+        run: |
+          npm run audit:ci
+          node scripts/audit-allowlist.mjs
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/DDD-CleanArchitecture-Template/browser
+          retention-days: 7
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run E2E suite
+        run: npx playwright test
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

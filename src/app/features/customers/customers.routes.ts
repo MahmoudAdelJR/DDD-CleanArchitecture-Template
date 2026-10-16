@@ -14,7 +14,7 @@ import { CustomerListPageComponent } from './customer-list/customer-list-page.co
  * the pages or the store.
  */
 const customersDataAccessProviders: Provider[] = [
-  { provide: CUSTOMER_REPOSITORY, useClass: InMemoryCustomerRepository }
+  { provide: CUSTOMER_REPOSITORY, useClass: InMemoryCustomerRepository },
 ];
 
 export const CUSTOMERS_ROUTES: Routes = [
@@ -22,12 +22,12 @@ export const CUSTOMERS_ROUTES: Routes = [
     path: '',
     component: CustomerListPageComponent,
     canActivate: [permissionGuard(AppPermissions.customersRead)],
-    providers: [...customersDataAccessProviders, CustomersStore]
+    providers: [...customersDataAccessProviders, CustomersStore],
   },
   {
     path: ':id',
     component: CustomerDetailPageComponent,
     canActivate: [permissionGuard(AppPermissions.customersRead)],
-    providers: customersDataAccessProviders
-  }
+    providers: customersDataAccessProviders,
+  },
 ];

@@ -7,6 +7,6 @@ import { NotificationHostComponent } from './core/ui/notification/notification-h
   selector: 'app-root',
   imports: [RouterOutlet, LoadingBarComponent, NotificationHostComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {}

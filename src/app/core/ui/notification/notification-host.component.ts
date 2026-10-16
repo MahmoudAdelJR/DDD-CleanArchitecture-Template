@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { AppNotification, NotificationService } from '../../services/notification.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NotificationService } from '../../services/notification.service';
+import type { AppNotification } from '../../services/notification.service';
 
 @Component({
   selector: 'app-notification-host',
@@ -31,14 +32,11 @@ import { AppNotification, NotificationService } from '../../services/notificatio
       }
     </div>
   `,
-  styleUrl: './notification-host.component.scss'
+  styleUrl: './notification-host.component.scss',
 })
 export class NotificationHostComponent {
-  protected readonly notifications;
-
-  constructor(protected readonly service: NotificationService) {
-    this.notifications = service.notifications;
-  }
+  private readonly service = inject(NotificationService);
+  protected readonly notifications = this.service.notifications;
 
   protected dismiss(notification: AppNotification): void {
     this.service.dismiss(notification.id);

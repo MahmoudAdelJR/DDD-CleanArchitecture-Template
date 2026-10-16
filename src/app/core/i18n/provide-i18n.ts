@@ -18,7 +18,6 @@ export function provideCoreI18n(): Provider[] {
   return [
     LocaleService,
     { provide: TRANSLATION, useExisting: LocaleService },
-    { provide: LOCALE_ID, useFactory: () => inject(LocaleService).locale() }
+    { provide: LOCALE_ID, useFactory: () => inject(LocaleService).locale() },
   ];
 }
-

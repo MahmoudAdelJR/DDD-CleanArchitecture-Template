@@ -9,10 +9,7 @@ const SERVER_ERROR_KEY = 'server';
  * matches control "email"); the 'general' bucket (and unmatched keys) are
  * attached to the target control itself.
  */
-export function applyServerValidationErrors(
-  target: AbstractControl,
-  apiError: ApiError
-): void {
+export function applyServerValidationErrors(target: AbstractControl, apiError: ApiError): void {
   clearServerValidationErrors(target);
 
   const general: string[] = [];
@@ -26,7 +23,7 @@ export function applyServerValidationErrors(
 
     control.setErrors({
       ...(control.errors ?? {}),
-      [SERVER_ERROR_KEY]: messages
+      [SERVER_ERROR_KEY]: messages,
     });
   }
 

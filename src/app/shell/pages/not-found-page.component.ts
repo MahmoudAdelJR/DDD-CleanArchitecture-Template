@@ -17,6 +17,6 @@ import { TranslatePipe } from '../../shared/i18n/translate.pipe';
       text-align: center;
       margin-top: var(--space-6);
     }
-  `
+  `,
 })
 export class NotFoundPageComponent {}

@@ -16,7 +16,7 @@ const CONFIG: AppConfig = {
   apiBaseUrl: '/api',
   trustedOrigins: ['http://trusted.example'],
   supportedLocales: ['en'],
-  defaultLocale: 'en'
+  defaultLocale: 'en',
 };
 
 const USER = { id: '1', fullName: 'Ada', email: 'a@b.c', permissions: [], roles: [] };
@@ -44,11 +44,10 @@ describe('authInterceptor', () => {
         {
           provide: SESSION_REFRESH_PORT,
           useValue: {
-            refresh:
-              refreshImpl ?? (() => Promise.reject(new Error('no refresh configured')))
-          }
-        }
-      ]
+            refresh: refreshImpl ?? (() => Promise.reject(new Error('no refresh configured'))),
+          },
+        },
+      ],
     });
 
     http = TestBed.inject(HttpClient);
@@ -61,7 +60,7 @@ describe('authInterceptor', () => {
       user: USER,
       accessToken: 'initial-token',
       refreshToken: 'refresh-1',
-      expiresAt
+      expiresAt,
     });
   }
 
@@ -103,9 +102,7 @@ describe('authInterceptor', () => {
     setup();
     signedIn();
 
-    http
-      .get('/api/analytics', { context: new HttpContext().set(SKIP_AUTH, true) })
-      .subscribe();
+    http.get('/api/analytics', { context: new HttpContext().set(SKIP_AUTH, true) }).subscribe();
     const req = controller.expectOne('/api/analytics');
     expect(req.request.headers.has('Authorization')).toBeFalse();
     req.flush({});
@@ -116,13 +113,13 @@ describe('authInterceptor', () => {
       user: USER,
       accessToken: 'fresh-token',
       refreshToken: 'refresh-2',
-      expiresAt: Date.now() + 60_000
+      expiresAt: Date.now() + 60_000,
     };
     setup(() => Promise.resolve(newSession));
     signedIn();
 
     let responseBody: unknown = null;
-    http.get('/api/customers').subscribe(body => (responseBody = body));
+    http.get('/api/customers').subscribe((body) => (responseBody = body));
 
     const first = controller.expectOne('/api/customers');
     first.flush({}, { status: 401, statusText: 'Unauthorized' });
@@ -141,11 +138,9 @@ describe('authInterceptor', () => {
       user: USER,
       accessToken: 'fresh-token',
       refreshToken: 'refresh-2',
-      expiresAt: Date.now() + 60_000
+      expiresAt: Date.now() + 60_000,
     };
-    const refresh = jasmine
-      .createSpy('refresh')
-      .and.resolveTo(newSession);
+    const refresh = jasmine.createSpy('refresh').and.resolveTo(newSession);
     setup(() => refresh());
 
     signedIn();
@@ -172,12 +167,10 @@ describe('authInterceptor', () => {
 
     let capturedError: unknown = null;
     http.get('/api/customers').subscribe({
-      error: error => (capturedError = error)
+      error: (error) => (capturedError = error),
     });
 
-    controller
-      .expectOne('/api/customers')
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    controller.expectOne('/api/customers').flush({}, { status: 401, statusText: 'Unauthorized' });
     await settle();
 
     expect(session.isAuthenticated()).toBeFalse();
@@ -191,12 +184,10 @@ describe('authInterceptor', () => {
 
     let capturedStatus: number | undefined;
     http.get('/api/customers').subscribe({
-      error: (error: { status: number }) => (capturedStatus = error.status)
+      error: (error: { status: number }) => (capturedStatus = error.status),
     });
 
-    controller
-      .expectOne('/api/customers')
-      .flush({}, { status: 500, statusText: 'Server error' });
+    controller.expectOne('/api/customers').flush({}, { status: 500, statusText: 'Server error' });
 
     expect(capturedStatus).toBe(500);
   });

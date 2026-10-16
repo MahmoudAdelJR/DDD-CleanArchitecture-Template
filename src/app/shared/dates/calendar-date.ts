@@ -9,11 +9,7 @@ export function isCalendarDateString(value: string): boolean {
 
   const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
   const probe = new Date(year, month - 1, day);
-  return (
-    probe.getFullYear() === year &&
-    probe.getMonth() === month - 1 &&
-    probe.getDate() === day
-  );
+  return probe.getFullYear() === year && probe.getMonth() === month - 1 && probe.getDate() === day;
 }
 
 /**
@@ -26,7 +22,7 @@ export function toCalendarDate(value: string): Date | null {
   }
 
   const [year, month, day] = value.split('-').map(Number);
-  return new Date(year!, month! - 1, day!);
+  return new Date(year, month - 1, day);
 }
 
 /** Formats a Date back to its local 'yyyy-MM-dd' calendar date (no UTC shift). */

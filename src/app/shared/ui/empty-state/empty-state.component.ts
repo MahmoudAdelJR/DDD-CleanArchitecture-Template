@@ -31,7 +31,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       justify-content: center;
       gap: var(--space-2);
     }
-  `
+  `,
 })
 export class EmptyStateComponent {
   readonly message = input.required<string>();

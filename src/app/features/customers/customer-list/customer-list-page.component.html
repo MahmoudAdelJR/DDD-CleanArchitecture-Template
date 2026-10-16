@@ -2,7 +2,9 @@
 
 @if (store.state(); as state) {
   <form class="search-bar" (ngSubmit)="searchCustomers()">
-    <label for="customer-search" class="visually-hidden">{{ 'customers.searchPlaceholder' | tr }}</label>
+    <label for="customer-search" class="visually-hidden">{{
+      'customers.searchPlaceholder' | tr
+    }}</label>
     <input
       id="customer-search"
       name="search"
@@ -29,7 +31,11 @@
     <p role="status" aria-live="polite" class="muted">{{ 'customers.loading' | tr }}</p>
   } @else if (state.result && state.result.items.length > 0) {
     <table class="customer-table">
-      <caption class="visually-hidden">{{ 'customers.title' | tr }}</caption>
+      <caption class="visually-hidden">
+        {{
+          'customers.title' | tr
+        }}
+      </caption>
       <thead>
         <tr>
           <th scope="col">{{ 'customers.colCompany' | tr }}</th>
@@ -73,7 +79,10 @@
         ‹
       </button>
       <span class="muted">
-        {{ 'customers.pagination' | tr: { page: state.result.pageNumber, total: state.result.totalPages } }}
+        {{
+          'customers.pagination'
+            | tr: { page: state.result.pageNumber, total: state.result.totalPages }
+        }}
       </span>
       <button
         class="button button--secondary"

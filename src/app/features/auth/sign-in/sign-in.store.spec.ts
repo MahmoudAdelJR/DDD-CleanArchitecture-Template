@@ -6,7 +6,7 @@ import { MemoryStorage } from '../../../core/testing/memory-storage';
 import {
   AUTHENTICATION_PORT,
   AuthenticationPort,
-  SignInFailure
+  SignInFailure,
 } from '../data-access/authentication.port';
 import type { AuthenticatedSession, SignInCredentials } from './sign-in.models';
 import { SignInStore } from './sign-in.store';
@@ -18,11 +18,11 @@ const validSession: AuthenticatedSession = {
     fullName: 'Ada Admin',
     email: 'admin@demo.local',
     permissions: ['customers.read', 'customers.write'],
-    roles: ['admin']
+    roles: ['admin'],
   },
   accessToken: 'test-token',
   refreshToken: 'test-refresh',
-  expiresAt: Date.now() + 3_600_000
+  expiresAt: Date.now() + 3_600_000,
 };
 
 function createPort(overrides: Partial<AuthenticationPort> = {}): AuthenticationPort {
@@ -30,21 +30,26 @@ function createPort(overrides: Partial<AuthenticationPort> = {}): Authentication
     signIn: (credentials: SignInCredentials) =>
       credentials.email === 'admin@demo.local' && credentials.password === 'Admin123!'
         ? Promise.resolve(validSession)
-        : Promise.reject(new SignInFailure('invalid_credentials', 'Email or password is incorrect.')),
-    ...overrides
+        : Promise.reject(
+            new SignInFailure('invalid_credentials', 'Email or password is incorrect.'),
+          ),
+    ...overrides,
   };
 }
 
 describe('SignInStore', () => {
-  function setup(port: AuthenticationPort = createPort()): { store: SignInStore; session: AuthSessionService } {
+  function setup(port: AuthenticationPort = createPort()): {
+    store: SignInStore;
+    session: AuthSessionService;
+  } {
     TestBed.configureTestingModule({
       providers: [
         SignInStore,
         SignInUseCase,
         { provide: AUTHENTICATION_PORT, useValue: port },
         { provide: STORAGE, useClass: MemoryStorage },
-        provideZonelessChangeDetection()
-      ]
+        provideZonelessChangeDetection(),
+      ],
     });
 
     return { store: TestBed.inject(SignInStore), session: TestBed.inject(AuthSessionService) };
@@ -74,7 +79,7 @@ describe('SignInStore', () => {
 
   it('reports a generic error for unexpected failures', async () => {
     const { store } = setup({
-      signIn: () => Promise.reject(new Error('boom'))
+      signIn: () => Promise.reject(new Error('boom')),
     });
 
     const result = await store.submit({ email: 'x@y.z', password: 'p' });

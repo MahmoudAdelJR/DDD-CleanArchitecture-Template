@@ -18,7 +18,7 @@ export const languageInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(
     request.clone({
-      setHeaders: { 'Accept-Language': locale }
-    })
+      setHeaders: { 'Accept-Language': locale },
+    }),
   );
 };

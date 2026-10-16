@@ -26,7 +26,7 @@ import { ValidationMessageResolver } from './validation-message.resolver';
         }
       </span>
     }
-  `
+  `,
 })
 export class FieldErrorComponent {
   readonly control = input<AbstractControl | null>(null);
@@ -37,6 +37,6 @@ export class FieldErrorComponent {
   private readonly resolver = inject(ValidationMessageResolver);
 
   protected readonly messages = computed(() =>
-    this.show() ? this.resolver.messages(this.control(), this.label()) : []
+    this.show() ? this.resolver.messages(this.control(), this.label()) : [],
   );
 }

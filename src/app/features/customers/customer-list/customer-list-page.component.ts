@@ -18,10 +18,10 @@ import { CustomersStore } from '../customers.store';
     TranslatePipe,
     PageHeaderComponent,
     EmptyStateComponent,
-    ErrorStateComponent
+    ErrorStateComponent,
   ],
   templateUrl: './customer-list-page.component.html',
-  styleUrl: './customer-list-page.component.scss'
+  styleUrl: './customer-list-page.component.scss',
 })
 export class CustomerListPageComponent {
   protected readonly store = inject(CustomersStore);

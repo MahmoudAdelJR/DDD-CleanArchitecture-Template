@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AppPermissions } from '../../../core/authorization/app-permissions';
 import type { SessionPayload } from '../../../core/auth/session.model';
 import { SessionRefreshPort } from '../../../core/auth/session-refresh.port';
-import { AUTHENTICATION_PORT, SignInFailure } from './authentication.port';
+import { SignInFailure } from './authentication.port';
 import type { AuthenticatedSession, SignInCredentials } from '../sign-in/sign-in.models';
 
 interface DemoAccount {
@@ -18,8 +18,8 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
       fullName: 'Ada Admin',
       email: 'admin@demo.local',
       permissions: [AppPermissions.customersRead, AppPermissions.customersWrite],
-      roles: ['admin']
-    }
+      roles: ['admin'],
+    },
   },
   {
     password: 'Reader123!',
@@ -28,9 +28,9 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
       fullName: 'Ray Reader',
       email: 'reader@demo.local',
       permissions: [AppPermissions.customersRead],
-      roles: ['user']
-    }
-  }
+      roles: ['user'],
+    },
+  },
 ];
 
 const DEMO_LATENCY_MS = 400;
@@ -43,7 +43,7 @@ export class FakeAuthenticationAdapter implements SessionRefreshPort {
 
     const email = credentials.email.trim().toLowerCase();
     const account = DEMO_ACCOUNTS.find(
-      candidate => candidate.user.email === email && candidate.password === credentials.password
+      (candidate) => candidate.user.email === email && candidate.password === credentials.password,
     );
 
     if (!account) {
@@ -57,7 +57,7 @@ export class FakeAuthenticationAdapter implements SessionRefreshPort {
     await this.simulateLatency();
 
     const userId = refreshToken.replace('demo-refresh-', '');
-    const account = DEMO_ACCOUNTS.find(candidate => candidate.user.id === userId);
+    const account = DEMO_ACCOUNTS.find((candidate) => candidate.user.id === userId);
 
     if (!account) {
       throw new SignInFailure('invalid_grant', 'Your session has expired. Please sign in again.');
@@ -71,11 +71,11 @@ export class FakeAuthenticationAdapter implements SessionRefreshPort {
       user,
       accessToken: `demo-access-token-${user.id}-${Date.now()}`,
       refreshToken: `demo-refresh-${user.id}`,
-      expiresAt: Date.now() + DEMO_SESSION_MS
+      expiresAt: Date.now() + DEMO_SESSION_MS,
     };
   }
 
   private simulateLatency(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, DEMO_LATENCY_MS));
+    return new Promise((resolve) => setTimeout(resolve, DEMO_LATENCY_MS));
   }
 }

@@ -14,7 +14,7 @@ import { MemoryStorage } from '../testing/memory-storage';
       <span class="granted">granted</span>
     </ng-container>
     <ng-template #denied><span class="denied">denied</span></ng-template>
-  `
+  `,
 })
 class HostComponent {
   required: string | readonly string[] = AppPermissions.customersWrite;
@@ -27,10 +27,7 @@ describe('HasPermissionDirective', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HostComponent],
-      providers: [
-        provideZonelessChangeDetection(),
-        { provide: STORAGE, useClass: MemoryStorage }
-      ]
+      providers: [provideZonelessChangeDetection(), { provide: STORAGE, useClass: MemoryStorage }],
     });
 
     session = TestBed.inject(AuthSessionService);
@@ -51,7 +48,7 @@ describe('HasPermissionDirective', () => {
     session.setSession({
       user: { id: '1', fullName: 'T', email: 't@e.x', permissions, roles: [] },
       accessToken: 'token',
-      expiresAt: null
+      expiresAt: null,
     });
   }
 
@@ -68,7 +65,7 @@ describe('HasPermissionDirective', () => {
   it('requires all permissions for an array binding by default', () => {
     fixture.componentInstance.required = [
       AppPermissions.customersRead,
-      AppPermissions.customersWrite
+      AppPermissions.customersWrite,
     ];
     signIn([AppPermissions.customersRead]);
     expect(renderedClass()).toBe('denied');

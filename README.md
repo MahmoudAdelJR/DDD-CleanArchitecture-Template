@@ -1,59 +1,48 @@
-# DDDCleanArchitectureTemplate
+# DDD Clean Architecture Template
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.1.
+An Angular 20 vertical-slice template: lazy feature modules, ports & adapters,
+secure session lifecycle, typed error handling, i18n, a11y, and a full quality
+gate pipeline. See `docs/ARCHITECTURE.md` for the rules and
+`ARCHITECTURE_IMPROVEMENT_PLAN.md` for the roadmap.
 
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Quick start
 
 ```bash
-ng generate component component-name
+npm ci
+npm start          # http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Demo accounts (the app runs against in-memory fake adapters, no backend needed):
 
-```bash
-ng generate --help
-```
+| Email             | Password   | Access                 |
+| ----------------- | ---------- | ---------------------- |
+| admin@demo.local  | Admin123!  | customers read + write |
+| reader@demo.local | Reader123! | customers read only    |
 
-## Building
+## Commands
 
-To build the project run:
+| Task                                                | Command                                                 |
+| --------------------------------------------------- | ------------------------------------------------------- |
+| Dev server                                          | `npm start`                                             |
+| Production build (bundle budgets enforced)          | `npm run build`                                         |
+| Unit tests (interactive)                            | `npm test`                                              |
+| Unit tests + coverage (CI mode)                     | `npm run test:ci`                                       |
+| Lint incl. architecture boundaries                  | `npm run lint`                                          |
+| Formatting                                          | `npm run format` / `npm run format:check`               |
+| Typecheck app, specs, and e2e                       | `npm run typecheck`                                     |
+| E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                           |
+| Dependency audit gates                              | `npm run audit:ci` + `node scripts/audit-allowlist.mjs` |
 
-```bash
-ng build
-```
+Supported runtimes are declared in `package.json` (`engines`, `packageManager`);
+always install with `npm ci` for reproducible trees.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Container / hosting reference
 
-## Running unit tests
+`deploy/Dockerfile` + `deploy/nginx.conf` provide a production-ready static
+hosting example (SPA fallback, immutable hashed-asset caching, gzip, security
+headers, health check). See `deploy/README.md`.
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Original CLI notes
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+This project was generated with the [Angular CLI](https://github.com/angular/angular-cli);
+generic guidance lives in the Angular docs (`ng generate --help`, etc.).

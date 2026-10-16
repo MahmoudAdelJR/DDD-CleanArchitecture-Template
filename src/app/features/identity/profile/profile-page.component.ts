@@ -86,7 +86,7 @@ import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
         font-size: 0.85rem;
       }
     }
-  `
+  `,
 })
 export class ProfilePageComponent {
   protected readonly authSession = inject(AuthSessionService);

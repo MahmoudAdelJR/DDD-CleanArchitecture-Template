@@ -1,7 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ApiError } from './api-error';
-import { applyServerValidationErrors, clearServerValidationErrors } from './server-validation.mapper';
+import {
+  applyServerValidationErrors,
+  clearServerValidationErrors,
+} from './server-validation.mapper';
 
 function apiError(validationErrors: Record<string, string[]>): ApiError {
   const httpError = new HttpErrorResponse({ status: 400 });
@@ -13,18 +16,21 @@ describe('applyServerValidationErrors', () => {
     return new FormGroup({
       email: new FormControl('a@b.c'),
       address: new FormGroup({ city: new FormControl('X') }),
-      untouched: new FormControl('keep')
+      untouched: new FormControl('keep'),
     });
   }
 
   it('maps PascalCase and dashed keys onto matching controls', () => {
     const group = form();
 
-    applyServerValidationErrors(group, apiError({ Email: ['Address is invalid.'], 'address-city': ['Unknown city.'] }));
+    applyServerValidationErrors(
+      group,
+      apiError({ Email: ['Address is invalid.'], 'address-city': ['Unknown city.'] }),
+    );
 
     expect(group.controls['email'].errors).toEqual({ server: ['Address is invalid.'] });
     expect((group.controls['address'] as FormGroup).controls['city'].errors).toEqual({
-      server: ['Unknown city.']
+      server: ['Unknown city.'],
     });
   });
 
@@ -33,7 +39,7 @@ describe('applyServerValidationErrors', () => {
 
     applyServerValidationErrors(
       group,
-      apiError({ general: ['Something is wrong.'], unknown_field: ['Mystery.'] })
+      apiError({ general: ['Something is wrong.'], unknown_field: ['Mystery.'] }),
     );
 
     expect(group.errors).toEqual({ server: ['Something is wrong.', 'Mystery.'] });

@@ -32,21 +32,21 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       }
 
       return from(authSession.refreshOnce()).pipe(
-        switchMap(refreshed => {
+        switchMap((refreshed) => {
           if (refreshed && authSession.accessToken()) {
             return next(
               request.clone({
-                setHeaders: { Authorization: `Bearer ${authSession.accessToken()}` }
-              })
+                setHeaders: { Authorization: `Bearer ${authSession.accessToken()}` },
+              }),
             );
           }
 
           void router.navigate(['/login'], {
-            queryParams: { returnUrl: router.url === '/' ? undefined : router.url }
+            queryParams: { returnUrl: router.url === '/' ? undefined : router.url },
           });
           return throwError(() => error);
-        })
+        }),
       );
-    })
+    }),
   );
 };

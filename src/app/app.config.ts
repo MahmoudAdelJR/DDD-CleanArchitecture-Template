@@ -3,7 +3,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
   inject,
-  provideAppInitializer
+  provideAppInitializer,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
@@ -20,12 +20,23 @@ import { AuthSessionService } from './core/services/auth-session.service';
 import { provideAuthDataAccess } from './features/auth/data-access/auth-data-access.providers';
 import { provideCoreI18n } from './core/i18n/provide-i18n';
 import { LocaleService } from './core/i18n/locale.service';
+import { LOGGER } from './shared/observability/logger.port';
+import { StructuredConsoleLogger } from './core/logging/structured-console.logger';
+import { AppErrorHandler } from './core/logging/app-error.handler';
+import { TELEMETRY } from './core/telemetry/telemetry.port';
+import { NoopTelemetryAdapter } from './core/telemetry/noop-telemetry.adapter';
+import {
+  CORRELATION_ID,
+  correlationInterceptor,
+  generateCorrelationId,
+} from './core/telemetry/correlation.interceptor';
+import { ErrorHandler } from '@angular/core';
 
 /**
  * Interceptor pipeline (outermost first):
- *   loading -> error -> language -> auth -> backend
+ *   loading -> error -> language -> correlation -> auth -> backend
  * The innermost auth interceptor refreshes and retries on 401, so the error
- * interceptor only notifies for failures that survive the retry.
+ * interceptor only notifies/logs failures that survive the retry.
  */
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -45,6 +56,13 @@ export const appConfig: ApplicationConfig = {
     // Platform-side auth adapters (swap with real HTTP/identity providers).
     ...provideAuthDataAccess(),
 
+    // Observability: redacted structured logs, replaceable telemetry sink,
+    // and a per-session correlation id propagated to trusted API requests.
+    { provide: LOGGER, useClass: StructuredConsoleLogger },
+    { provide: TELEMETRY, useClass: NoopTelemetryAdapter },
+    { provide: CORRELATION_ID, useFactory: generateCorrelationId },
+    { provide: ErrorHandler, useClass: AppErrorHandler },
+
     provideAppInitializer(() => {
       // Construct now so document lang/dir sync and translation lookups are
       // ready before the first component renders.
@@ -57,7 +75,13 @@ export const appConfig: ApplicationConfig = {
 
     provideHttpClient(
       withFetch(),
-      withInterceptors([loadingInterceptor, errorInterceptor, languageInterceptor, authInterceptor])
-    )
-  ]
+      withInterceptors([
+        loadingInterceptor,
+        errorInterceptor,
+        languageInterceptor,
+        correlationInterceptor,
+        authInterceptor,
+      ]),
+    ),
+  ],
 };

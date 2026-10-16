@@ -1,0 +1,8 @@
+dist
+node_modules
+.angular
+coverage
+playwright-report
+test-results
+package-lock.json
+src/app/core/i18n/locale-catalog.ts

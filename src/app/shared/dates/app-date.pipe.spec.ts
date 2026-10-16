@@ -7,8 +7,8 @@ function port(locale: string): TranslationPort {
   return {
     locale: () => locale,
     supportedLocales: () => [locale],
-    translate: key => key,
-    setLocale: () => {}
+    translate: (key) => key,
+    setLocale: () => {},
   };
 }
 
@@ -18,8 +18,8 @@ describe('AppDatePipe', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: TRANSLATION, useFactory: () => port(locale) },
-        AppDatePipe
-      ]
+        AppDatePipe,
+      ],
     });
     return TestBed.inject(AppDatePipe);
   }

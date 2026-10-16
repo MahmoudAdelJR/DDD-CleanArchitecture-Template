@@ -24,26 +24,26 @@ export class CustomersStore {
     page: 1,
     pageSize: 5,
     result: null,
-    error: null
+    error: null,
   });
 
   load(): void {
     const current = this.state();
-    this.fetch({ search: current.search, page: current.page });
+    void this.fetch({ search: current.search, page: current.page });
   }
 
   searchFor(term: string): void {
-    this.fetch({ search: term, page: 1 });
+    void this.fetch({ search: term, page: 1 });
   }
 
   goToPage(page: number): void {
     const current = this.state();
-    this.fetch({ search: current.search, page });
+    void this.fetch({ search: current.search, page });
   }
 
   private async fetch(query: { search: string; page: number }): Promise<void> {
     const current = this.state();
-    this.state.update(state => ({ ...state, status: 'loading', error: null }));
+    this.state.update((state) => ({ ...state, status: 'loading', error: null }));
 
     try {
       const result = await this.repository.search({ ...query, pageSize: current.pageSize });
@@ -53,13 +53,13 @@ export class CustomersStore {
         page: result.pageNumber,
         pageSize: current.pageSize,
         result,
-        error: null
+        error: null,
       });
     } catch {
-      this.state.update(state => ({
+      this.state.update((state) => ({
         ...state,
         status: 'error',
-        error: 'The customers could not be loaded. Please try again.'
+        error: 'The customers could not be loaded. Please try again.',
       }));
     }
   }

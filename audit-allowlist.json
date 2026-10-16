@@ -1,0 +1,12 @@
+{
+  "$comment": "Dev-only advisories with no shipped fix. Every entry needs a reason and an expiry; the gate fails closed otherwise. See scripts/audit-allowlist.mjs.",
+  "accepted": [
+    {
+      "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "title": "braces: stack-exhaustion DoS via deeply nested glob patterns",
+      "devOnly": true,
+      "reason": "Transitive of karma (test toolchain, never shipped to production). No fixed braces release exists (affects <=3.0.3, range *). Re-evaluate when karma 6.4.5+/7 ships or the unit runner is replaced.",
+      "expires": "2027-04-01"
+    }
+  ]
+}

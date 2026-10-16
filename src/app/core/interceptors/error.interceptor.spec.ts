@@ -17,8 +17,8 @@ describe('errorInterceptor', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideHttpClient(withInterceptors([errorInterceptor])),
-        provideHttpClientTesting()
-      ]
+        provideHttpClientTesting(),
+      ],
     });
 
     http = TestBed.inject(HttpClient);
@@ -26,10 +26,14 @@ describe('errorInterceptor', () => {
     notifications = TestBed.inject(NotificationService);
   });
 
-  function requestWithError(error: string | object, status = 400, context?: HttpContext): Promise<ApiError> {
-    return new Promise(resolve => {
+  function requestWithError(
+    error: string | object,
+    status = 400,
+    context?: HttpContext,
+  ): Promise<ApiError> {
+    return new Promise((resolve) => {
       http.get('/api/resource', { context }).subscribe({
-        error: (caught: ApiError) => resolve(caught)
+        error: (caught: ApiError) => resolve(caught),
       });
       controller.expectOne('/api/resource').flush(error, { status, statusText: 'Failed' });
     });
@@ -39,7 +43,7 @@ describe('errorInterceptor', () => {
     const apiError = await requestWithError({
       title: 'One or more errors occurred.',
       status: 400,
-      errors: [{ code: 'DuplicateName', description: 'The name is taken.' }]
+      errors: [{ code: 'DuplicateName', description: 'The name is taken.' }],
     });
 
     expect(apiError).toBeInstanceOf(ApiError);
@@ -55,9 +59,9 @@ describe('errorInterceptor', () => {
       title: 'One or more validation errors occurred.',
       status: 400,
       errors: {
-        Email: ["The Email field is not a valid e-mail address.", 'Email is required.'],
-        Password: ['The Password field is required.']
-      }
+        Email: ['The Email field is not a valid e-mail address.', 'Email is required.'],
+        Password: ['The Password field is required.'],
+      },
     });
 
     expect(apiError.validationErrors['Email']?.length).toBe(2);
@@ -68,7 +72,7 @@ describe('errorInterceptor', () => {
   it('derives a safe message and code for problem details without errors', async () => {
     const apiError = await requestWithError(
       { detail: 'The order cannot be shipped twice.', code: 'AlreadyShipped' },
-      409
+      409,
     );
 
     expect(apiError.message).toBe('The order cannot be shipped twice.');
@@ -79,16 +83,16 @@ describe('errorInterceptor', () => {
   it('does not leak raw server text for 5xx responses', async () => {
     const apiError = await requestWithError(
       'System.InvalidOperationException: stack trace details',
-      500
+      500,
     );
 
     expect(apiError.message).toBe('The server encountered an unexpected error.');
   });
 
   it('reports an unreachable service for network failures', async () => {
-    const apiError = await new Promise<ApiError>(resolve => {
+    const apiError = await new Promise<ApiError>((resolve) => {
       http.get('/api/resource').subscribe({
-        error: (caught: ApiError) => resolve(caught)
+        error: (caught: ApiError) => resolve(caught),
       });
       controller
         .expectOne('/api/resource')
@@ -107,23 +111,24 @@ describe('errorInterceptor', () => {
   });
 
   it('captures the correlation id from response headers', async () => {
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       let captured: ApiError | null = null;
       http.get('/api/resource').subscribe({
         error: (caught: ApiError) => {
           captured = caught;
           expect(caught.correlationId).toBe('abc-123');
           resolve();
-        }
+        },
       });
 
-      controller
-        .expectOne('/api/resource')
-        .flush({ detail: 'boom' }, {
+      controller.expectOne('/api/resource').flush(
+        { detail: 'boom' },
+        {
           status: 500,
           statusText: 'Failed',
-          headers: { 'x-correlation-id': 'abc-123' }
-        });
+          headers: { 'x-correlation-id': 'abc-123' },
+        },
+      );
       void captured;
     });
   });
