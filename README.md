@@ -75,6 +75,7 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
 | Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--workflow]` |
 | Add a page to an existing slice                     | `npm run gen:page -- orders approve`         |
 | Slice wiring integrity check                        | `npm run check:architecture`                 |
+| Generator integration tests (isolated fixtures)     | `npm run test:generator`                     |
 | Dependency audit gates                              | `npm run audit:ci` + `npm run audit:gate`    |
 
 ## Documentation

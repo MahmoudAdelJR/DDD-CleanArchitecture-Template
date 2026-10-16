@@ -72,6 +72,27 @@ jobs:
           path: dist/DDD-CleanArchitecture-Template/browser
           retention-days: 7
 
+  generator:
+    name: Generator integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install (clean, reproducible)
+        run: npm ci
+
+      - name: Generator + architecture integration tests
+        run: npm run test:generator
+
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest

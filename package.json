@@ -1,6 +1,6 @@
 {
   "name": "ddd-clean-architecture-template",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "engines": {
     "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
   },
@@ -12,11 +12,12 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --no-watch --browsers=ChromeHeadless --code-coverage",
+    "test:generator": "node --test scripts/generate.integration.test.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json && tsc --noEmit -p e2e/tsconfig.json",
-    "format": "prettier --write \"./{src,e2e,deploy,docs,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
-    "format:check": "prettier --check \"./{src,e2e,deploy,docs,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
+    "format": "prettier --write \"./{src,e2e,deploy,docs,scripts,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
+    "format:check": "prettier --check \"./{src,e2e,deploy,docs,scripts,.github}/**/*.{ts,mjs,json,html,scss,md,yml,yaml}\" \"*.{ts,mjs,json,md}\"",
     "e2e": "playwright test",
     "e2e:report": "playwright show-report",
     "audit:ci": "npm audit --omit=dev --audit-level=high",

@@ -24,7 +24,7 @@ const result = spawnSync('npm audit --json', {
   cwd: root,
   encoding: 'utf8',
   shell: true,
-  maxBuffer: 64 * 1024 * 1024
+  maxBuffer: 64 * 1024 * 1024,
 });
 
 let report;
@@ -55,31 +55,41 @@ for (const [pkgName, vuln] of Object.entries(report.vulnerabilities ?? {})) {
   }
 }
 
-const accepted = new Map(allowlist.accepted.map(entry => [entry.url, entry]));
+const accepted = new Map(allowlist.accepted.map((entry) => [entry.url, entry]));
 const violations = [];
 
 for (const [url, finding] of findings) {
   const entry = accepted.get(url);
   if (!entry) {
-    violations.push(`UNACCEPTED [${finding.severity}] ${finding.title}\n  advisory: ${url}\n  packages: ${[...new Set(finding.packages)].join(', ')}`);
+    violations.push(
+      `UNACCEPTED [${finding.severity}] ${finding.title}\n  advisory: ${url}\n  packages: ${[...new Set(finding.packages)].join(', ')}`,
+    );
     continue;
   }
 
   if (new Date(entry.expires) < now) {
-    violations.push(`EXPIRED allowance (${entry.expires}) ${finding.title}\n  advisory: ${url}\n  packages: ${[...new Set(finding.packages)].join(', ')}`);
+    violations.push(
+      `EXPIRED allowance (${entry.expires}) ${finding.title}\n  advisory: ${url}\n  packages: ${[...new Set(finding.packages)].join(', ')}`,
+    );
     continue;
   }
 
   if (!entry.devOnly) {
-    violations.push(`ALLOWLIST ERROR: "${finding.title}" is marked non-devOnly but appears in the dependency tree; production highs must be fixed, not allowed.\n  advisory: ${url}`);
+    violations.push(
+      `ALLOWLIST ERROR: "${finding.title}" is marked non-devOnly but appears in the dependency tree; production highs must be fixed, not allowed.\n  advisory: ${url}`,
+    );
   }
 }
 
 if (violations.length > 0) {
   console.error('Audit gate failed:\n');
   console.error(violations.join('\n\n'));
-  console.error('\nFix the dependency, or update audit-allowlist.json with justification and an expiry (dev-only findings).');
+  console.error(
+    '\nFix the dependency, or update audit-allowlist.json with justification and an expiry (dev-only findings).',
+  );
   process.exit(1);
 }
 
-console.log(`Audit gate passed. ${findings.size} blocking advisory/ies, all accepted as dev-only with valid expiry.`);
+console.log(
+  `Audit gate passed. ${findings.size} blocking advisory/ies, all accepted as dev-only with valid expiry.`,
+);

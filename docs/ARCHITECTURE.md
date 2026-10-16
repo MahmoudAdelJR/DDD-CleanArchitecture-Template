@@ -49,10 +49,16 @@ npm run gen:page    -- orders approve        # new page inside an existing slice
 ```
 
 The generator wires the lazy route into `app.routes.ts`, registers the
-cross-feature ESLint zone, formats everything, and re-runs
-typecheck/lint/unit-tests before exiting — generated slices are
-conventions-compliant by construction (see ADR-0005). Manual slices must
-match the generated shape; CI checks the wiring either way.
+cross-feature ESLint zone, formats everything, and re-runs the architecture
+check, typecheck, lint, and unit tests before exiting. It is transactional:
+any failure — including formatting — automatically rolls the workspace back
+to its exact prior state. Page-route insertion goes through the TypeScript
+parser, so static pages always land before `:id` (one-line route arrays
+included). Behavior is pinned by `npm run test:generator`, which exercises
+the generator against throwaway fixture workspaces (never the repo).
+Generated slices are conventions-compliant by construction (see ADR-0005);
+manual slices must match the generated shape — CI checks the wiring either
+way.
 
 ## Localization model
 

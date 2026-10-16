@@ -17,10 +17,18 @@ scaffold slices that are, by construction, conventions-compliant: folder
 layout, port/token/in-memory adapter, route-scoped providers, list+detail
 pages with a11y primitives, specs, the lazy route entry in `app.routes.ts`,
 and the cross-feature zone in `eslint.config.mjs`. Insertion points are
-marker comments; `scripts/check-architecture.mjs` (CI step + post-generate
-verification) fails if a feature folder lacks its zone or route wiring.
-The generator runs typecheck, lint, and the unit suite before declaring
-success, and prints revert steps otherwise.
+marker comments; page routes are patched through the TypeScript parser (so
+one-line `Routes` arrays and static-before-`:id` ordering are handled
+correctly). `scripts/check-architecture.mjs` (CI step + post-generate
+verification) fails if a feature folder lacks its zone or route wiring —
+in either direction (stale zones, dead/duplicate imports, mismatched route
+files). The generator is transactional: every touched file is snapshotted
+before any write, gates (architecture, typecheck, lint, unit tests) run
+after, and ANY failure — including formatting — restores the workspace to
+its exact prior state. Tool invocations go through Node directly (no shell),
+and the whole behavior is pinned by integration tests
+(`npm run test:generator`) that run against temporary fixture workspaces on
+Windows and Linux.
 
 ## Alternatives considered
 
@@ -34,5 +42,6 @@ success, and prints revert steps otherwise.
 - Positive: new contributors produce review-ready slices in one command.
 - Positive: boundary bookkeeping (zones/routes) is automated and checked.
 - Negative: the generator's templates must evolve with the conventions —
-  the verification run inside it is the safety net.
+  the verification run inside it and the integration-test suite are the
+  safety net.
 - Follow-up: consider packaging as schematics once template forks stabilize.

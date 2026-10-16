@@ -5,39 +5,53 @@
  *   npm run gen:feature -- <name> [--workflow]   # new lazy feature slice
  *   npm run gen:page    -- <feature> <pageName>  # new page inside a feature
  *
- * Generated code follows the conventions in docs/ARCHITECTURE.md. The script
- * wires the lazy route into src/app/app.routes.ts, registers the cross-feature
- * ESLint boundary zone, formats every touched file, and re-runs typecheck +
- * lint + unit tests before reporting success. On failure it prints exact
- * revert instructions.
+ * The generator is transactional: it validates arguments and wiring
+ * preflight-only, computes every change in memory, snapshots touched files,
+ * then applies, formats, and verifies (architecture check, typecheck, lint,
+ * unit tests). ANY failure rolls the workspace back to its exact prior state.
+ *
+ * Imported entry point (runGenerator/checkArchitecture) so integration tests
+ * can run it against throwaway fixture workspaces with an injected runner.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import ts from 'typescript';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FEATURES_DIR = join(ROOT, 'src', 'app', 'features');
-const APP_ROUTES = join(ROOT, 'src', 'app', 'app.routes.ts');
-const ESLINT_CONFIG = join(ROOT, 'eslint.config.mjs');
+const MODULE_PATH = fileURLToPath(import.meta.url);
+const DEFAULT_ROOT = resolve(join(dirname(MODULE_PATH), '..'));
+
 const APP_ROUTE_MARKER = '// gen:app-route';
 const ESLINT_MARKER = '// gen:feature-zones';
 
-const [command, ...args] = process.argv.slice(2);
-
-switch (command) {
-  case 'feature':
-    generateFeature(args);
-    break;
-  case 'page':
-    generatePage(args);
-    break;
-  default:
-    console.error('Usage:');
-    console.error('  node scripts/generate.mjs feature <name> [--workflow]');
-    console.error('  node scripts/generate.mjs page <feature> <pageName>');
-    process.exit(1);
+export class GeneratorError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'GeneratorError';
+  }
 }
+
+const CLI_ENTRY_POINTS = {
+  prettier: join('node_modules', 'prettier', 'bin', 'prettier.cjs'),
+  tsc: join('node_modules', 'typescript', 'bin', 'tsc'),
+  eslint: join('node_modules', 'eslint', 'bin', 'eslint.js'),
+  ng: join('node_modules', '@angular', 'cli', 'bin', 'ng.js'),
+};
+
+/** Runs a checked-in Node CLI entry point with NO shell (no DEP0190, no injection). */
+export function defaultRunCommand(scriptPath, args, cwd) {
+  return spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd,
+    encoding: 'utf8',
+    shell: false,
+    maxBuffer: 32 * 1024 * 1024,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// naming helpers
+// ---------------------------------------------------------------------------
 
 function kebab(value) {
   return value
@@ -67,58 +81,303 @@ function singular(value) {
 
 function assertKebabName(value, label) {
   if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(value)) {
-    console.error(`${label} must be kebab-case (e.g. "orders"), got "${value}".`);
-    process.exit(1);
+    throw new GeneratorError(`${label} must be kebab-case (e.g. "orders"), got "${value}".`);
   }
 }
 
-function run(cmd, cmdArgs) {
-  return spawnSync(cmd, cmdArgs, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    shell: process.platform === 'win32',
-    maxBuffer: 32 * 1024 * 1024
-  });
-}
+// ---------------------------------------------------------------------------
+// strict argument parsing (raw values, no silent normalization)
+// ---------------------------------------------------------------------------
 
-function prettier(paths) {
-  const result = run('npx', ['prettier', '--write', ...paths]);
-  if (result.status !== 0) {
-    console.error(result.stderr);
+function parseFeatureArgs(args) {
+  const flags = args.filter((a) => a.startsWith('--'));
+  const positional = args.filter((a) => !a.startsWith('--'));
+  const unknown = flags.filter((f) => f !== '--workflow');
+  if (unknown.length > 0) {
+    throw new GeneratorError(
+      `Unknown flag(s): ${unknown.join(', ')}. Usage: feature <name> [--workflow]`,
+    );
   }
-}
-
-function writeFileIn(cwd, relativePath, content) {
-  const target = join(cwd, relativePath);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, content, 'utf8');
-  return target;
-}
-
-function toPosix(file) {
-  return relative(ROOT, file).replaceAll('\\', '/');
-}
-
-function generateFeature(args) {
-  const name = kebab(args.find((a) => !a.startsWith('--')) ?? '');
-  const withWorkflow = args.includes('--workflow');
+  if (positional.length !== 1) {
+    throw new GeneratorError(
+      'Usage: feature <name> [--workflow] — exactly one feature name expected.',
+    );
+  }
+  const name = positional[0];
   assertKebabName(name, 'Feature name');
+  return { name, withWorkflow: flags.includes('--workflow') };
+}
 
-  const featureDir = join(FEATURES_DIR, name);
-  if (existsSync(featureDir)) {
-    console.error(`Feature "${name}" already exists at src/app/features/${name}.`);
-    process.exit(1);
+function parsePageArgs(args) {
+  const flags = args.filter((a) => a.startsWith('--'));
+  const positional = args.filter((a) => !a.startsWith('--'));
+  if (flags.length > 0) {
+    throw new GeneratorError(
+      `gen:page takes no flags, got: ${flags.join(', ')}. Usage: page <feature> <pageName>`,
+    );
+  }
+  if (positional.length !== 2) {
+    throw new GeneratorError('Usage: page <feature> <pageName> — exactly two names expected.');
+  }
+  assertKebabName(positional[0], 'Feature name');
+  assertKebabName(positional[1], 'Page name');
+  return { feature: positional[0], page: positional[1] };
+}
+
+// ---------------------------------------------------------------------------
+// transactional workspace
+// ---------------------------------------------------------------------------
+
+class Transaction {
+  constructor(createdRoots = []) {
+    this.patches = [];
+    this.createdFiles = [];
+    this.createdRoots = createdRoots.filter((dir) => existsSync(dir) === false);
+    this.committed = false;
   }
 
+  patchFile(path, content) {
+    const existed = existsSync(path);
+    this.patches.push({ path, existed, original: existed ? readFileSync(path) : null });
+    writeFileSync(path, content, 'utf8');
+  }
+
+  writeFile(path, content) {
+    mkdirSync(dirname(path), { recursive: true });
+    this.createdFiles.push(path);
+    writeFileSync(path, content, 'utf8');
+  }
+
+  commit() {
+    this.committed = true;
+  }
+
+  /** Restores the exact prior state; returns a list of rollback problems (if any). */
+  rollback() {
+    const problems = [];
+    for (const patch of this.patches) {
+      try {
+        if (patch.existed) writeFileSync(patch.path, patch.original, 'utf8');
+        else rmSync(patch.path, { force: true });
+      } catch (error) {
+        problems.push(`restore ${patch.path}: ${error.message}`);
+      }
+    }
+    for (const file of this.createdFiles) {
+      try {
+        rmSync(file, { force: true });
+      } catch (error) {
+        problems.push(`delete ${file}: ${error.message}`);
+      }
+    }
+    for (const root of this.createdRoots) {
+      try {
+        rmSync(root, { recursive: true, force: true });
+      } catch (error) {
+        problems.push(`remove tree ${root}: ${error.message}`);
+      }
+    }
+    return problems;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// tool execution + verification
+// ---------------------------------------------------------------------------
+
+function makeToolRunner(ctx) {
+  return function runTool(tool, args) {
+    const script =
+      tool === 'checkArchitecture'
+        ? join(ctx.root, 'scripts', 'check-architecture.mjs')
+        : join(ctx.root, CLI_ENTRY_POINTS[tool]);
+    const result = ctx.runCommand(script, args, ctx.root);
+    const describe2 = `${tool} ${args.join(' ')}`;
+    if (result.error) {
+      throw new GeneratorError(`Could not run ${describe2}: ${result.error.message}`);
+    }
+    if (result.signal || result.status === null || result.status === undefined) {
+      throw new GeneratorError(
+        `${describe2} was terminated${result.signal ? ` by signal ${result.signal}` : ''}.`,
+      );
+    }
+    if (result.status !== 0) {
+      const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
+      const tail = output.length > 3000 ? `…(output truncated)…\n${output.slice(-3000)}` : output;
+      throw new GeneratorError(
+        `Verification step FAILED: ${describe2} (exit ${result.status})\n${tail}`,
+      );
+    }
+    return result;
+  };
+}
+
+function verify(ctx, runTool) {
+  const steps = [
+    ['checkArchitecture', [], 'slice wiring integrity'],
+    ['tsc', ['--noEmit', '-p', 'tsconfig.app.json'], 'app typecheck'],
+    ['eslint', ['.'], 'lint + boundaries'],
+    ['ng', ['test', '--no-watch', '--browsers=ChromeHeadless'], 'unit tests'],
+  ];
+  ctx.log(`Verifying: ${steps.map((s) => s[2]).join(' → ')}…`);
+  for (const [tool, args] of steps) runTool(tool, args);
+}
+
+// ---------------------------------------------------------------------------
+// marker wiring (feature mode)
+// ---------------------------------------------------------------------------
+
+function findMarkerLine(source, marker) {
+  const lines = source.split(/\r?\n/);
+  const hits = [];
+  lines.forEach((line, index) => {
+    if (line.trim().startsWith(marker)) hits.push(index);
+  });
+  if (hits.length === 0) {
+    throw new GeneratorError(
+      `Marker "${marker}" not found. Restore it (see docs/ARCHITECTURE.md) or update the generator.`,
+    );
+  }
+  if (hits.length > 1) {
+    throw new GeneratorError(
+      `Marker "${marker}" must appear exactly once, found ${hits.length} times.`,
+    );
+  }
+  return hits[0];
+}
+
+function spliceAtLine(source, lineIndex, snippetLines) {
+  const eol = source.includes('\r\n') ? '\r\n' : '\n';
+  const lines = source.split(/\r?\n/);
+  const indent = lines[lineIndex].match(/^\s*/)[0];
+  const snippet = snippetLines.map((line) => (line ? `${indent}${line}` : line));
+  return [...lines.slice(0, lineIndex), ...snippet, ...lines.slice(lineIndex)].join(eol);
+}
+
+function routeSnippetLines(name) {
+  return [
+    `{`,
+    `path: '${name}',`,
+    `loadChildren: () =>`,
+    `import('./features/${name}/${name}.routes').then((m) => m.${screaming(name)}_ROUTES),`,
+    `},`,
+  ];
+}
+
+function zoneSnippetLines(name) {
+  return [
+    `{`,
+    `target: './features/${name}',`,
+    `from: './features',`,
+    `except: ['./${name}'],`,
+    `message: 'cross-feature import: expose a contract instead',`,
+    `},`,
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// page route patching via TypeScript AST (handles one-line arrays, inserts
+// static pages before ':id'/'**' routes, detects duplicate paths)
+// ---------------------------------------------------------------------------
+
+function findRoutesArray(sf) {
+  let found = null;
+  for (const statement of sf.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    const declarations = statement.declarationList.declarations;
+    if (declarations.length !== 1) continue;
+    const decl = declarations[0];
+    if (
+      decl.initializer &&
+      ts.isArrayLiteralExpression(decl.initializer) &&
+      decl.type &&
+      decl.type.getText(sf) === 'Routes'
+    ) {
+      if (found) throw new GeneratorError('Multiple Routes array declarations found — ambiguous.');
+      found = decl.initializer;
+    }
+  }
+  if (!found) {
+    throw new GeneratorError(
+      'Could not locate a `: Routes = [...]` array literal in the routes file.',
+    );
+  }
+  return found;
+}
+
+function insertPageRoute(source, feature, page, Page) {
+  const sf = ts.createSourceFile(`${feature}.routes.ts`, source, ts.ScriptTarget.Latest, true);
+  const array = findRoutesArray(sf);
+  const elements = array.elements;
+
+  let insertIndex = elements.length;
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (!ts.isObjectLiteralExpression(el)) continue;
+    for (const prop of el.properties) {
+      if (!ts.isPropertyAssignment(prop)) continue;
+      const nameNode = prop.name;
+      const nameText = ts.isStringLiteral(nameNode) ? nameNode.text : nameNode.getText(sf);
+      if (nameText !== 'path') continue;
+      if (!ts.isStringLiteral(prop.initializer)) continue;
+      const value = prop.initializer.text;
+      if (value === page) {
+        throw new GeneratorError(
+          `A route with path '${page}' already exists in ${feature}.routes.ts.`,
+        );
+      }
+      if ((value.startsWith(':') || value === '**') && insertIndex === elements.length) {
+        insertIndex = i;
+      }
+    }
+  }
+
+  const newRoute = `{\npath: '${page}',\ncomponent: ${Page}PageComponent,\n}`;
+  const importLine = `import { ${Page}PageComponent } from './${page}-page/${page}-page.component';`;
+  if (source.includes(importLine)) {
+    throw new GeneratorError(`Import for page '${page}' already exists in ${feature}.routes.ts.`);
+  }
+
+  const edits = [];
+  let lastImport = null;
+  for (const statement of sf.statements) {
+    if (ts.isImportDeclaration(statement) && statement.importClause) lastImport = statement;
+  }
+  if (lastImport) edits.push({ pos: lastImport.getEnd(), text: `\n${importLine}` });
+  else
+    edits.push({
+      pos: sf.statements.length > 0 ? sf.getStart(sf.statements[0]) : 0,
+      text: `${importLine}\n\n`,
+    });
+
+  if (elements.length === 0) {
+    edits.push({ pos: array.getStart(sf) + 1, text: `\n${newRoute},\n` });
+  } else if (insertIndex < elements.length) {
+    edits.push({ pos: elements[insertIndex].getStart(sf), text: `${newRoute},\n` });
+  } else {
+    edits.push({ pos: elements[elements.length - 1].getEnd(), text: `,\n${newRoute}` });
+  }
+
+  edits.sort((a, b) => b.pos - a.pos);
+  let patched = source;
+  for (const edit of edits) {
+    patched = patched.slice(0, edit.pos) + edit.text + patched.slice(edit.pos);
+  }
+  return patched;
+}
+
+// ---------------------------------------------------------------------------
+// generated file templates
+// ---------------------------------------------------------------------------
+
+function buildFeatureFiles(name, withWorkflow) {
   const entity = singular(name);
   const Entity = pascal(entity);
   const Feature = pascal(name);
   const TOKEN = screaming(entity);
+  const files = [];
+  const F = (path, content) => files.push([path, content]);
 
-  const created = [];
-  const F = (path, content) => created.push(writeFileIn(featureDir, path, content));
-
-  // ---- data access ---------------------------------------------------------
   F(
     `data-access/${name}.models.ts`,
     `export interface ${Entity}Summary {
@@ -182,7 +441,7 @@ const ITEMS: ${Entity}Details[] = [
 @Injectable()
 export class InMemory${Entity}Repository implements ${Entity}Repository {
   async search(query: ${Entity}Search): Promise<PagedList<${Entity}Summary>> {
-    await this.simulateLatency();
+    await this.delay();
 
     const term = query.search.trim().toLowerCase();
     const filtered = term
@@ -206,7 +465,7 @@ export class InMemory${Entity}Repository implements ${Entity}Repository {
   }
 
   async findById(id: string): Promise<${Entity}Details> {
-    await this.simulateLatency();
+    await this.delay();
 
     const found = ITEMS.find((item) => item.id === id);
     if (!found) {
@@ -215,8 +474,8 @@ export class InMemory${Entity}Repository implements ${Entity}Repository {
     return found;
   }
 
-  private simulateLatency(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 200));
+  private delay(): Promise<void> {
+    return new Promise((resolveDelay) => setTimeout(resolveDelay, 200));
   }
 }
 
@@ -227,7 +486,6 @@ function toSummary(item: ${Entity}Details): ${Entity}Summary {
 `,
   );
 
-  // ---- feature store ---------------------------------------------------------
   F(
     `${name}.store.ts`,
     `import { inject, Injectable, signal } from '@angular/core';
@@ -299,7 +557,6 @@ export class ${Feature}Store {
 `,
   );
 
-  // ---- list page ------------------------------------------------------------
   F(
     `${entity}-list/${entity}-list-page.component.ts`,
     `import { Component, inject, signal } from '@angular/core';
@@ -417,7 +674,6 @@ export class ${Entity}ListPageComponent {
 `,
   );
 
-  // ---- detail page -----------------------------------------------------------
   F(
     `${entity}-detail/${entity}-detail-page.component.ts`,
     `import { Component, inject, signal } from '@angular/core';
@@ -480,7 +736,6 @@ export class ${Entity}DetailPageComponent {
 `,
   );
 
-  // ---- routes ------------------------------------------------------------------
   F(
     `${name}.routes.ts`,
     `import { Provider } from '@angular/core';
@@ -514,7 +769,6 @@ export const ${screaming(name)}_ROUTES: Routes = [
 `,
   );
 
-  // ---- specs ---------------------------------------------------------------------
   F(
     `data-access/in-memory-${entity}.repository.spec.ts`,
     `import { InMemory${Entity}Repository } from './in-memory-${entity}.repository';
@@ -606,71 +860,117 @@ describe('${Entity} domain workflow (generated)', () => {
     );
   }
 
-  // ---- wiring ---------------------------------------------------------------------
-  const routeSnippet = `      {
-        path: '${name}',
-        loadChildren: () =>
-          import('./features/${name}/${name}.routes').then((m) => m.${screaming(name)}_ROUTES)
-      },
-`;
-  insertAtMarker(APP_ROUTES, APP_ROUTE_MARKER, routeSnippet, `features/${name}`);
-
-  const zoneSnippet = `            {
-              target: './features/${name}',
-              from: './features',
-              except: ['./${name}'],
-              message: 'cross-feature import: expose a contract instead'
-            },
-`;
-  insertAtMarker(ESLINT_CONFIG, ESLINT_MARKER, zoneSnippet, `target: './features/${name}'`);
-
-  prettier([...created.map(toPosix), 'src/app/app.routes.ts', 'eslint.config.mjs']);
-
-  console.log(
-    `Created feature "${name}" (${created.length} files)${withWorkflow ? ' with domain workflow' : ''}.`
-  );
-  console.log('Inserted the lazy route into app.routes.ts and the boundary zone into eslint.config.mjs.');
-
-  verify(name);
-
-  console.log('\nNext steps:');
-  console.log(`  1. Replace seed data and TODOs in src/app/features/${name}.`);
-  console.log(`  2. Add "${name}.*" translations to src/app/core/i18n/locale-catalog.ts and switch to the tr pipe.`);
-  console.log(`  3. To protect routes: permissionGuard(AppPermissions.${entity}Read) — register the permission in core/authorization/app-permissions.ts and the demo adapter.`);
-  console.log(`  4. To use a real backend: implement the repository with BaseHttpService (docs/recipes/backend-cutover.md).`);
+  return { entity, Entity, Feature, TOKEN, files };
 }
 
-function generatePage(args) {
-  const feature = kebab(args[0] ?? '');
-  const page = kebab(args[1] ?? '');
-  assertKebabName(feature, 'Feature name');
-  assertKebabName(page, 'Page name');
+// ---------------------------------------------------------------------------
+// commands
+// ---------------------------------------------------------------------------
 
-  const featureDir = join(FEATURES_DIR, feature);
-  if (!existsSync(featureDir)) {
-    console.error(`Feature "${feature}" does not exist (src/app/features/${feature}).`);
-    process.exit(1);
+function toPosix(root, file) {
+  return relative(root, file).split('\\').join('/');
+}
+
+function generateFeature(ctx, args) {
+  const { root, log } = ctx;
+  const { name, withWorkflow } = parseFeatureArgs(args);
+  const featureDir = join(root, 'src', 'app', 'features', name);
+  const appRoutesPath = join(root, 'src', 'app', 'app.routes.ts');
+  const eslintPath = join(root, 'eslint.config.mjs');
+
+  if (existsSync(featureDir)) {
+    throw new GeneratorError(
+      `Feature "${name}" already exists at src/app/features/${name}. No changes were made.`,
+    );
   }
 
+  // ---- preflight: everything validated before any write ----
+  if (!existsSync(appRoutesPath)) throw new GeneratorError('src/app/app.routes.ts is missing.');
+  if (!existsSync(eslintPath)) throw new GeneratorError('eslint.config.mjs is missing.');
+  const appRoutesSource = readFileSync(appRoutesPath, 'utf8');
+  const eslintSource = readFileSync(eslintPath, 'utf8');
+
+  if (appRoutesSource.includes(`'./features/${name}/${name}.routes'`)) {
+    throw new GeneratorError(`app.routes.ts already references feature "${name}".`);
+  }
+  if (eslintSource.includes(`'./features/${name}'`)) {
+    throw new GeneratorError(`eslint.config.mjs already has a boundary zone for "${name}".`);
+  }
+
+  const appRouteLine = findMarkerLine(appRoutesSource, APP_ROUTE_MARKER);
+  const eslintMarkerLine = findMarkerLine(eslintSource, ESLINT_MARKER);
+  const { entity, Entity, Feature, TOKEN, files } = buildFeatureFiles(name, withWorkflow);
+
+  const patchedRoutes = spliceAtLine(appRoutesSource, appRouteLine, routeSnippetLines(name));
+  const patchedEslint = spliceAtLine(eslintSource, eslintMarkerLine, zoneSnippetLines(name));
+
+  // ---- apply (transactional) ----
+  const tx = new Transaction([featureDir]);
+  const runTool = makeToolRunner(ctx);
+  try {
+    tx.patchFile(appRoutesPath, patchedRoutes);
+    tx.patchFile(eslintPath, patchedEslint);
+    for (const [rel, content] of files) tx.writeFile(join(featureDir, rel), content);
+
+    runTool('prettier', [
+      '--write',
+      ...files.map(([rel]) => toPosix(root, join(featureDir, rel))),
+      'src/app/app.routes.ts',
+      'eslint.config.mjs',
+    ]);
+    verify(ctx, runTool);
+    tx.commit();
+  } catch (error) {
+    const problems = tx.rollback();
+    throw new GeneratorError(
+      `${error.message}\nWorkspace rolled back.${problems.length ? ` ROLLBACK INCOMPLETE: ${problems.join('; ')}` : ''}`,
+    );
+  }
+
+  log(
+    `Created feature "${name}" (${files.length} files)${withWorkflow ? ' with domain workflow' : ''}.`,
+  );
+  log('Lazy route + ESLint boundary zone wired; all gates passed.');
+  log('\nNext steps:');
+  log(`  1. Replace seed data and TODOs in src/app/features/${name}.`);
+  log(
+    `  2. Add "${name}.*" translations to src/app/core/i18n/locale-catalog.ts and switch to the tr pipe.`,
+  );
+  log(
+    `  3. Protect routes with permissionGuard — register the permission in core/authorization/app-permissions.ts.`,
+  );
+  log(
+    `  4. Real backend? Implement the repository with BaseHttpService (docs/recipes/backend-cutover.md).`,
+  );
+  return { feature: name, entity, Entity, Feature, TOKEN };
+}
+
+function generatePage(ctx, args) {
+  const { root, log } = ctx;
+  const { feature, page } = parsePageArgs(args);
+  const featureDir = join(root, 'src', 'app', 'features', feature);
+  const routesPath = join(featureDir, `${feature}.routes.ts`);
   const pageDir = join(featureDir, `${page}-page`);
+
+  if (!existsSync(featureDir)) {
+    throw new GeneratorError(`Feature "${feature}" does not exist (src/app/features/${feature}).`);
+  }
+  if (!existsSync(routesPath)) {
+    throw new GeneratorError(
+      `Feature "${feature}" has no ${feature}.routes.ts — cannot wire a page route.`,
+    );
+  }
   if (existsSync(pageDir)) {
-    console.error(`Page "${page}" already exists in feature "${feature}".`);
-    process.exit(1);
+    throw new GeneratorError(
+      `Page "${page}" already exists in feature "${feature}". No changes were made.`,
+    );
   }
 
   const Page = pascal(page);
-  const routesFile = join(featureDir, `${feature}.routes.ts`);
-  const source = readFileSync(routesFile, 'utf8');
-  if (source.includes(`${page}-page`)) {
-    console.error(`Route for "${page}" already registered in ${feature}.routes.ts.`);
-    process.exit(1);
-  }
+  const source = readFileSync(routesPath, 'utf8');
+  const patched = insertPageRoute(source, feature, page, Page); // pure preflight
 
-  const created = [
-    writeFileIn(
-      featureDir,
-      `${page}-page/${page}-page.component.ts`,
-      `import { Component } from '@angular/core';
+  const componentContent = `import { Component } from '@angular/core';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 @Component({
@@ -685,87 +985,66 @@ import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.
   \`
 })
 export class ${Page}PageComponent {}
-`,
-    )
-  ];
+`;
 
-  const importLine = `import { ${Page}PageComponent } from './${page}-page/${page}-page.component';`;
+  const tx = new Transaction([pageDir]);
+  const runTool = makeToolRunner(ctx);
+  try {
+    tx.writeFile(join(pageDir, `${page}-page.component.ts`), componentContent);
+    tx.patchFile(routesPath, patched);
 
-  let patched = source;
-  if (!patched.includes(importLine)) {
-    // Append after the last single-line import of the file.
-    const importLineRegex = /^import\s+[^\n]*\n/gm;
-    let lastIndex = 0;
-    for (const match of patched.matchAll(importLineRegex)) {
-      lastIndex = match.index + match[0].length;
-    }
-    patched =
-      lastIndex === 0
-        ? `${importLine}\n\n${patched}`
-        : patched.slice(0, lastIndex) + `${importLine}\n` + patched.slice(lastIndex);
+    runTool('prettier', [
+      '--write',
+      toPosix(root, join(pageDir, `${page}-page.component.ts`)),
+      toPosix(root, routesPath),
+    ]);
+    verify(ctx, runTool);
+    tx.commit();
+  } catch (error) {
+    const problems = tx.rollback();
+    throw new GeneratorError(
+      `${error.message}\nWorkspace rolled back.${problems.length ? ` ROLLBACK INCOMPLETE: ${problems.join('; ')}` : ''}`,
+    );
   }
 
-  // Static page routes go FIRST so they are matched before ':id'.
-  const headerIndex = patched.search(/Routes\s*=\s*\[/);
-  if (headerIndex === -1) {
-    console.error(`Could not locate the Routes array in ${feature}.routes.ts.`);
-    process.exit(1);
-  }
-  const insertPos = patched.indexOf('\n', headerIndex) + 1;
-  patched =
-    patched.slice(0, insertPos) +
-    `  {\n    path: '${page}',\n    component: ${Page}PageComponent\n  },\n` +
-    patched.slice(insertPos);
-  writeFileSync(routesFile, patched, 'utf8');
-  created.push(routesFile);
-
-  prettier(created.map(toPosix));
-
-  console.log(`Created page "${page}" in feature "${feature}" and registered its route.`);
-  verify(feature);
-
-  console.log(
-    `\nPath available at /${feature}/${page}. The route was inserted before the ':id' route so it matches first.`
-  );
+  log(`Created page "${page}" in feature "${feature}" and registered its route.`);
+  log(`Path available at /${feature}/${page} (inserted before any ':id' or wildcard route).`);
+  return { feature, page };
 }
 
-function insertAtMarker(file, marker, snippet, guardText) {
-  const source = readFileSync(file, 'utf8');
-  if (source.includes(guardText)) {
-    console.error(`Wiring for "${guardText}" already exists in ${toPosix(file)} — aborting before changes.`);
-    process.exit(1);
-  }
+// ---------------------------------------------------------------------------
+// entry point
+// ---------------------------------------------------------------------------
 
-  const index = source.indexOf(marker);
-  if (index === -1) {
-    console.error(`Marker "${marker}" not found in ${toPosix(file)}. Restore it or update the generator.`);
-    process.exit(1);
-  }
+export function runGenerator({
+  argv,
+  root = DEFAULT_ROOT,
+  runCommand = defaultRunCommand,
+  log = (message) => console.log(message),
+} = {}) {
+  const [command, ...args] = argv;
+  const ctx = { root, runCommand, log };
 
-  const lineStart = source.lastIndexOf('\n', index) + 1;
-  writeFileSync(file, source.slice(0, lineStart) + snippet + source.slice(lineStart), 'utf8');
-}
-
-function verify(label) {
-  console.log('Verifying generated code against the repository gates...');
-  const steps = [
-    ['npx', ['tsc', '--noEmit', '-p', 'tsconfig.app.json']],
-    ['npx', ['eslint', '.']],
-    ['npx', ['ng', 'test', '--no-watch', '--browsers=ChromeHeadless']]
-  ];
-
-  for (const [cmd, cmdArgs] of steps) {
-    const result = run(cmd, cmdArgs);
-    if (result.status !== 0) {
-      console.error(`\nVerification failed: ${cmd} ${cmdArgs.join(' ')}`);
-      console.error(result.stdout ?? '');
-      console.error(result.stderr ?? '');
-      console.error(
-        `\nRevert: delete src/app/features/<name>/ and remove every line mentioning "<name>" from src/app/app.routes.ts and eslint.config.mjs (or use your editor's undo).`
+  switch (command) {
+    case 'feature':
+      return generateFeature(ctx, args);
+    case 'page':
+      return generatePage(ctx, args);
+    default:
+      throw new GeneratorError(
+        'Usage:\n  node scripts/generate.mjs feature <name> [--workflow]\n  node scripts/generate.mjs page <feature> <pageName>',
       );
-      process.exit(1);
-    }
   }
+}
 
-  console.log(`Generated slice "${label}" passes typecheck, lint (boundaries included), and all unit tests.`);
+const invokedDirectly =
+  process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+
+if (invokedDirectly) {
+  try {
+    runGenerator({ argv: process.argv.slice(2) });
+  } catch (error) {
+    console.error(`\nGenerator FAILED: ${error.message}`);
+    process.exitCode = 1;
+  }
 }

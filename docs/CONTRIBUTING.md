@@ -21,8 +21,11 @@ npm run gen:page   -- orders approve
 ```
 
 Generated slices ship wired route + boundary zone + store + port/adapter +
-specs, and the generator verifies typecheck, lint, and tests before exiting.
-Hand-built slices are accepted only if they match the generated shape.
+specs. The generator verifies slice wiring, typecheck, lint, and tests before
+exiting — and rolls the workspace back to its exact prior state on ANY
+failure. Hand-built slices are accepted only if they match the generated
+shape. Generator behavior is covered by `npm run test:generator` (isolated
+fixture workspaces; safe to run anywhere).
 
 ## Before opening a PR (local gates — CI runs the same)
 
@@ -33,6 +36,7 @@ Hand-built slices are accepted only if they match the generated shape.
 - [ ] `npm run test:ci` (coverage line gate ≥ 80%)
 - [ ] `npm run build` (bundle budgets enforced)
 - [ ] `npm run e2e` when flows/UX changed
+- [ ] `npm run test:generator` when `scripts/` changed
 - [ ] `npm run audit:gate` when dependencies changed
 
 ## PR checklist

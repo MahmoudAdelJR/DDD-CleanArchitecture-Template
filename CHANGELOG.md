@@ -6,6 +6,43 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-16
+
+### Added
+
+- Generator integration tests (`npm run test:generator`): 25 scenarios on
+  throwaway fixture workspaces under the OS temp dir — success paths, strict
+  argument validation, marker errors, route-ordering regressions, rollback
+  on every gate failure, and no-shell argument passing.
+- CI matrix job running the generator tests on both Ubuntu and Windows.
+- `check:architecture` now also detects stale zones, duplicate zones,
+  duplicate lazy imports, mismatched `<feature>.routes` filenames, and
+  missing route files.
+
+### Changed
+
+- **The generator is now transactional.** Every touched file is snapshotted
+  before any write; any failure (formatter included) restores the workspace
+  to its exact prior state instead of printing manual revert steps.
+- Prettier failures abort generation (previously logged and ignored).
+- Argument validation is strict and pre-flight: raw kebab-case enforced,
+  unknown flags and extra arguments rejected, duplicate route paths
+  detected — nothing is written when validation fails.
+- Page routes are inserted via the TypeScript parser: static pages always
+  land before `:id`/wildcard routes.
+- Tool invocations run through Node directly (`shell: false`, checked-in CLI
+  entry points) — fixes the `DEP0190` warning and removes shell
+  argument-interpretation risk on Windows.
+- Generator verification now includes the architecture integrity check.
+- `scripts/**/*.mjs` are covered by format/lint gates.
+
+### Fixed
+
+- `gen:page` corrupted one-line `Routes` arrays (e.g. `identity.routes.ts`)
+  by inserting outside the brackets.
+- A missing `--write` flag made the generator's formatting step a silent
+  no-op (caught by the real-workspace proof run).
+
 ## [1.0.1] - 2026-10-16
 
 ### Added
@@ -50,6 +87,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   ADRs, contributing and security docs, recipes (backend cutover, feature
   flags, SSR, PWA). MIT-licensed.
 
-[unreleased]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.0.1...HEAD
+[unreleased]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/releases/tag/v1.0.0
