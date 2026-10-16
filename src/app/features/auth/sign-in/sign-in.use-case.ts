@@ -10,6 +10,6 @@ export class SignInUseCase {
 
   async execute(credentials: SignInCredentials): Promise<void> {
     const session = await this.authentication.signIn(credentials);
-    this.authSession.setSession(session.user, session.accessToken);
+    this.authSession.setSession(session);
   }
 }

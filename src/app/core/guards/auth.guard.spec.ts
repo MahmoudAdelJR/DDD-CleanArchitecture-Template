@@ -11,13 +11,19 @@ import {
 } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { AuthSessionService } from '../services/auth-session.service';
+import { STORAGE } from '../storage/storage.port';
+import { MemoryStorage } from '../testing/memory-storage';
 
 describe('authGuard', () => {
   let router: Router;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideZonelessChangeDetection()]
+      providers: [
+        provideRouter([]),
+        provideZonelessChangeDetection(),
+        { provide: STORAGE, useClass: MemoryStorage }
+      ]
     });
     router = TestBed.inject(Router);
   });
@@ -30,10 +36,11 @@ describe('authGuard', () => {
 
   it('allows access when authenticated', () => {
     const session = TestBed.inject(AuthSessionService);
-    session.setSession(
-      { id: '1', fullName: 'Test', email: 'test@example.com', permissions: [], roles: [] },
-      'token'
-    );
+    session.setSession({
+      user: { id: '1', fullName: 'Test', email: 'test@example.com', permissions: [], roles: [] },
+      accessToken: 'token',
+      expiresAt: null
+    });
 
     expect(activate('/customers')).toBe(true);
   });

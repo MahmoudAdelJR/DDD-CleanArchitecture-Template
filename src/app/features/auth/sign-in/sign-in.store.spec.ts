@@ -1,6 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AuthSessionService } from '../../../core/services/auth-session.service';
+import { STORAGE } from '../../../core/storage/storage.port';
+import { MemoryStorage } from '../../../core/testing/memory-storage';
 import {
   AUTHENTICATION_PORT,
   AuthenticationPort,
@@ -18,7 +20,9 @@ const validSession: AuthenticatedSession = {
     permissions: ['customers.read', 'customers.write'],
     roles: ['admin']
   },
-  accessToken: 'test-token'
+  accessToken: 'test-token',
+  refreshToken: 'test-refresh',
+  expiresAt: Date.now() + 3_600_000
 };
 
 function createPort(overrides: Partial<AuthenticationPort> = {}): AuthenticationPort {
@@ -38,6 +42,7 @@ describe('SignInStore', () => {
         SignInStore,
         SignInUseCase,
         { provide: AUTHENTICATION_PORT, useValue: port },
+        { provide: STORAGE, useClass: MemoryStorage },
         provideZonelessChangeDetection()
       ]
     });
