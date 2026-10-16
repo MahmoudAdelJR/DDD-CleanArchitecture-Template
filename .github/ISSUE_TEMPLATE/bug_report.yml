@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible problem in the template itself
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: >
+        This repository is a starter template. Report problems with the
+        template's own code, generators, docs, or gates — not bugs in
+        applications derived from it.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Exact, observable failure and what you expected instead.
+      placeholder: |
+        Steps:
+        1. npm run gen:feature -- ...
+        2. ...
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+  - type: input
+    id: template-version
+    attributes:
+      label: Template version or commit
+      description: git describe --tags or the commit SHA
+    validations:
+      required: true
+  - type: input
+    id: toolchain
+    attributes:
+      label: Environment
+      description: OS, Node version (node -v), npm version
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Gate status
+      description: Which local gates fail on a clean checkout?
+      options:
+        - label: format:check
+        - label: lint
+        - label: check:architecture
+        - label: typecheck
+        - label: test:ci
+        - label: build
+        - label: e2e
+        - label: Other / not gate-related
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Paste the failing command output (redact anything private).
+      render: shell

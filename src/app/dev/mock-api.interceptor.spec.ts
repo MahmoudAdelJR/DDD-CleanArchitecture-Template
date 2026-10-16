@@ -71,24 +71,34 @@ describe('mockApiInterceptor', () => {
   it('falls through to the backend for unmatched API routes', () => {
     const { http, controller } = setup(MOCK_CONFIG);
 
-    http.get('/api/unknown').subscribe();
+    let body: any = null;
+    http.get<any>('/api/unknown').subscribe((value) => (body = value));
     const request = controller.expectOne('/api/unknown');
     request.flush({ real: true });
+
+    expect(body).toEqual({ real: true });
   });
 
   it('passes everything through when mockApi is disabled', () => {
     const { http, controller } = setup(DISABLED_CONFIG);
 
-    http.get('/api/customers').subscribe();
+    let body: any = null;
+    http.get<any[]>('/api/customers').subscribe((value) => (body = value));
     const request = controller.expectOne('/api/customers');
-    request.flush([]);
+    request.flush([{ id: 'c1', company: 'Reached the real backend' }]);
+
+    expect(body.length).toBe(1);
+    expect(body[0].company).toBe('Reached the real backend');
   });
 
   it('never intercepts untrusted third-party requests', () => {
     const { http, controller } = setup(MOCK_CONFIG);
 
-    http.get('https://partner.example/api/customers').subscribe();
+    let body: any = null;
+    http.get<any[]>('https://partner.example/api/customers').subscribe((value) => (body = value));
     const request = controller.expectOne('https://partner.example/api/customers');
     request.flush([]);
+
+    expect(body).toEqual([]);
   });
 });

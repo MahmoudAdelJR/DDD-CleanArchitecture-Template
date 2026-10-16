@@ -1,8 +1,8 @@
 # Architecture
 
-This document defines the target module structure and the dependency rules for this
-template. Automated boundary enforcement (ESLint import rules) is planned for Phase 4
-in `ARCHITECTURE_IMPROVEMENT_PLAN.md`.
+This document defines the module structure and the dependency rules for this
+template. Boundary enforcement is automated: ESLint import zones plus
+`npm run check:architecture`, both wired into CI.
 
 ## Layer model
 

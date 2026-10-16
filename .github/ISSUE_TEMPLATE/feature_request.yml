@@ -1,0 +1,40 @@
+name: Template improvement
+description: Propose a feature, recipe, generator, or convention change
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Big architectural shifts (state strategy, boundary rules, build tooling)
+        need an ADR in docs/adr/ before or alongside the proposal.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is hard, missing, or wrong today?
+      description: The consumer-facing problem, with concrete steps if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should the template do instead? Which files/commands are affected?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - generators / scripts
+        - architecture / boundaries
+        - docs / ADRs / recipes
+        - CI / quality gates
+        - deployment
+        - other
+  - type: checkboxes
+    id: adr
+    attributes:
+      label: ADR needed?
+      options:
+        - label: This changes an architectural decision and needs (or has) an ADR

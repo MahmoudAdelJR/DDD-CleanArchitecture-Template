@@ -10,7 +10,7 @@ npm start        # http://localhost:4200
 
 Understand the layer model and the dependency table in
 [`docs/ARCHITECTURE.md`](ARCHITECTURE.md); decisions live in
-[`docs/adr/`](docs/adr/).
+[`adr/`](adr/).
 
 ## Adding a feature (the blessed path)
 
@@ -33,7 +33,7 @@ Hand-built slices are accepted only if they match the generated shape.
 - [ ] `npm run test:ci` (coverage line gate ≥ 80%)
 - [ ] `npm run build` (bundle budgets enforced)
 - [ ] `npm run e2e` when flows/UX changed
-- [ ] `node scripts/audit-allowlist.mjs` when dependencies changed
+- [ ] `npm run audit:gate` when dependencies changed
 
 ## PR checklist
 

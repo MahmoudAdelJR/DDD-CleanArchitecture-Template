@@ -54,11 +54,7 @@ describe('CustomerHttpRepository', () => {
   });
 
   it('omits empty search terms from the query string', async () => {
-    const promise = repository.search({ search: '', page: 1, pageSize: 5 });
-    const request = controller.expectOne(
-      (req) => req.url === '/api/customers' && !req.params.has('search'),
-    );
-    request.flush({
+    const body: PagedList<CustomerSummary> = {
       items: [],
       pageNumber: 1,
       pageSize: 5,
@@ -66,9 +62,15 @@ describe('CustomerHttpRepository', () => {
       totalPages: 1,
       hasPreviousPage: false,
       hasNextPage: false,
-    });
+    };
 
-    await promise;
+    const promise = repository.search({ search: '', page: 1, pageSize: 5 });
+    const request = controller.expectOne(
+      (req) => req.url === '/api/customers' && !req.params.has('search'),
+    );
+    request.flush(body);
+
+    await expectAsync(promise).toBeResolvedTo(body);
   });
 
   it('maps 404 responses to CustomerNotFoundError', async () => {

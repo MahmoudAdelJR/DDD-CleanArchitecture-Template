@@ -37,7 +37,8 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests with coverage
-        run: npm run test:ci | tee test-output.log
+        shell: bash
+        run: set -o pipefail && npm run test:ci | tee test-output.log
 
       - name: Coverage threshold gate (lines >= 80%)
         run: |
@@ -62,7 +63,7 @@ jobs:
       - name: Dependency audit (production must be clean; dev needs allowlisted advisories)
         run: |
           npm run audit:ci
-          node scripts/audit-allowlist.mjs
+          npm run audit:gate
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

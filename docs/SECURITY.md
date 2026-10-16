@@ -44,10 +44,10 @@ must never be the only thing deciding anything sensitive.
 
 ## Reporting vulnerabilities
 
-Open a private security advisory (GitHub → Security → Report a vulnerability)
-or the contact your org defines for internal templates. Include: the exact
-commit/tag, reproduction path, and impact assessment. Avoid public issues
-for exploitable findings.
+Open a private security advisory (GitHub → Security → Report a vulnerability),
+or use the contact your organization defines for internal templates. Include
+the exact commit/tag, a reproduction path, and an impact assessment. Avoid
+public issues for exploitable findings.
 
 ## Release posture
 
