@@ -59,3 +59,7 @@ headers, health check). See `deploy/README.md`.
 
 This project was generated with the [Angular CLI](https://github.com/angular/angular-cli);
 generic guidance lives in the Angular docs (`ng generate --help`, etc.).
+
+## License
+
+Licensed under the [MIT License](LICENSE).
