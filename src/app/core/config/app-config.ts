@@ -7,6 +7,11 @@ export interface AppConfig {
   trustedOrigins: string[];
   supportedLocales: string[];
   defaultLocale: string;
+  /**
+   * When true, the dev mock API (src/app/dev) answers trusted `/api` requests
+   * from fixtures. Never enable in production builds.
+   */
+  mockApi?: boolean;
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
@@ -14,6 +19,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   trustedOrigins: [],
   supportedLocales: ['en', 'fr'],
   defaultLocale: 'en',
+  mockApi: false,
 };
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('core.AppConfig');

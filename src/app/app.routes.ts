@@ -25,6 +25,7 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/identity/identity.routes').then((m) => m.IDENTITY_ROUTES),
       },
+      // gen:app-route — npm run gen:feature inserts new lazy feature routes here
       { path: 'forbidden', component: ForbiddenPageComponent },
     ],
   },

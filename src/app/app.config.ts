@@ -30,13 +30,17 @@ import {
   correlationInterceptor,
   generateCorrelationId,
 } from './core/telemetry/correlation.interceptor';
+import { mockApiInterceptor } from './dev/mock-api.interceptor';
 import { ErrorHandler } from '@angular/core';
 
 /**
  * Interceptor pipeline (outermost first):
- *   loading -> error -> language -> correlation -> auth -> backend
+ *   loading -> error -> language -> correlation -> auth -> mock -> backend
+ *
  * The innermost auth interceptor refreshes and retries on 401, so the error
  * interceptor only notifies/logs failures that survive the retry.
+ * The dev mock interceptor answers trusted requests when AppConfig.mockApi
+ * is true and otherwise passes everything through to the real backend.
  */
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -81,6 +85,7 @@ export const appConfig: ApplicationConfig = {
         languageInterceptor,
         correlationInterceptor,
         authInterceptor,
+        mockApiInterceptor,
       ]),
     ),
   ],

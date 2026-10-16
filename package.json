@@ -20,7 +20,10 @@
     "e2e": "playwright test",
     "e2e:report": "playwright show-report",
     "audit:ci": "npm audit --omit=dev --audit-level=high",
-    "audit:gate": "node scripts/audit-allowlist.mjs"
+    "audit:gate": "node scripts/audit-allowlist.mjs",
+    "gen:feature": "node scripts/generate.mjs feature",
+    "gen:page": "node scripts/generate.mjs page",
+    "check:architecture": "node scripts/check-architecture.mjs"
   },
   "prettier": {
     "printWidth": 100,

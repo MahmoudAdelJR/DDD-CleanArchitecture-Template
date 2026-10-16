@@ -133,6 +133,17 @@ export default tseslint.config(
             },
             // features never reach into shell or each other
             { target: './features', from: './shell', message: 'features must not import shell' },
+            // dev fixtures are standalone; only the composition root may wire them
+            {
+              target: './dev',
+              from: './features',
+              message: 'dev fixtures import shared models only',
+            },
+            {
+              target: './features',
+              from: './dev',
+              message: 'features must not import dev fixtures; wire mocks in app.config.ts',
+            },
             {
               target: './features/auth',
               from: './features',
@@ -151,6 +162,7 @@ export default tseslint.config(
               except: ['./identity'],
               message: 'cross-feature import: expose a contract instead',
             },
+            // gen:feature-zones — npm run gen:feature inserts new cross-feature zones here
           ],
         },
       ],

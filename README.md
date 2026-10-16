@@ -31,10 +31,23 @@ Demo accounts (the app runs against in-memory fake adapters, no backend needed):
 | Formatting                                          | `npm run format` / `npm run format:check`               |
 | Typecheck app, specs, and e2e                       | `npm run typecheck`                                     |
 | E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                           |
+| Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--workflow]`            |
+| Add a page to an existing slice                     | `npm run gen:page -- orders approve`                    |
+| Slice wiring integrity check                        | `npm run check:architecture`                            |
 | Dependency audit gates                              | `npm run audit:ci` + `node scripts/audit-allowlist.mjs` |
 
 Supported runtimes are declared in `package.json` (`engines`, `packageManager`);
 always install with `npm ci` for reproducible trees.
+
+## Documentation
+
+- `docs/ARCHITECTURE.md` — layer model, dependency rules, HTTP pipeline, i18n, session lifecycle
+- `docs/adr/` — architectural decision records (why things are the way they are)
+- `docs/CONTRIBUTING.md` — first-10-minutes guide and PR gate checklist
+- `docs/SECURITY.md` — threat model notes and hardening posture
+- `docs/recipes/` — backend cutover, feature flags, SSR, PWA
+- `deploy/` — containerized nginx production reference
+- `ARCHITECTURE_IMPROVEMENT_PLAN.md` — the roadmap this template was built from
 
 ## Container / hosting reference
 

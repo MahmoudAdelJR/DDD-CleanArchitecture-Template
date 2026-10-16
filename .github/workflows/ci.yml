@@ -30,6 +30,9 @@ jobs:
       - name: Lint (includes architecture boundary rules)
         run: npm run lint
 
+      - name: Slice wiring integrity (folders <-> zones <-> routes)
+        run: npm run check:architecture
+
       - name: Typecheck
         run: npm run typecheck
 
