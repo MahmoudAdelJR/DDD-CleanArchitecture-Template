@@ -1,6 +1,6 @@
 // core/services/auth-session.service.ts
 
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 
 export interface AuthUser {
   id: string;
@@ -12,21 +12,24 @@ export interface AuthUser {
 
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
-  readonly user = signal<AuthUser | null>(null);
-  readonly accessToken = signal<string | null>(null);
+  private readonly _user = signal<AuthUser | null>(null);
+  private readonly _accessToken = signal<string | null>(null);
 
-  readonly isAuthenticated = signal(false);
+  readonly user = this._user.asReadonly();
+  readonly accessToken = this._accessToken.asReadonly();
+
+  readonly isAuthenticated = computed(
+    () => this._user() !== null && this._accessToken() !== null
+  );
 
   setSession(user: AuthUser, accessToken: string): void {
-    this.user.set(user);
-    this.accessToken.set(accessToken);
-    this.isAuthenticated.set(true);
+    this._user.set(user);
+    this._accessToken.set(accessToken);
   }
 
   clearSession(): void {
-    this.user.set(null);
-    this.accessToken.set(null);
-    this.isAuthenticated.set(false);
+    this._user.set(null);
+    this._accessToken.set(null);
   }
 
   hasPermission(permission: string): boolean {

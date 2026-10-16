@@ -1,0 +1,83 @@
+<header class="page-header">
+  <h1>Customers</h1>
+</header>
+
+@if (store.state(); as state) {
+  <form class="search-bar" (ngSubmit)="searchCustomers()">
+    <label for="customer-search" class="visually-hidden">Search customers</label>
+    <input
+      id="customer-search"
+      name="search"
+      type="search"
+      placeholder="Search company, contact, email or city"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+    />
+    <button class="button" type="submit">Search</button>
+    @if (search()) {
+      <button class="button button--secondary" type="button" (click)="clearSearch()">Clear</button>
+    }
+  </form>
+
+  @if (state.status === 'error') {
+    <div class="error-banner" role="alert">{{ state.error }}</div>
+  } @else if (state.status === 'loading') {
+    <p role="status" aria-live="polite" class="muted">Loading customers…</p>
+  } @else if (state.result && state.result.items.length > 0) {
+    <table class="customer-table">
+      <caption class="visually-hidden">Customer list</caption>
+      <thead>
+        <tr>
+          <th scope="col">Company</th>
+          <th scope="col">Contact</th>
+          <th scope="col">City</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (customer of state.result.items; track customer.id) {
+          <tr>
+            <td>
+              <a [routerLink]="['/customers', customer.id]">{{ customer.company }}</a>
+            </td>
+            <td>{{ customer.contactName }}</td>
+            <td>{{ customer.city }}</td>
+            <td>
+              <span [class]="'status status--' + customer.status">{{ customer.status }}</span>
+            </td>
+            <td>
+              <ng-container *appHasPermission="customersWritePermission">
+                <a class="button button--secondary" [routerLink]="['/customers', customer.id]">
+                  Manage
+                </a>
+              </ng-container>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <nav class="pagination" aria-label="Customer pages">
+      <button
+        class="button button--secondary"
+        type="button"
+        [disabled]="!state.result.hasPreviousPage"
+        (click)="store.goToPage(state.result.pageNumber - 1)"
+      >
+        Previous
+      </button>
+      <span class="muted">Page {{ state.result.pageNumber }} of {{ state.result.totalPages }}</span>
+      <button
+        class="button button--secondary"
+        type="button"
+        [disabled]="!state.result.hasNextPage"
+        (click)="store.goToPage(state.result.pageNumber + 1)"
+      >
+        Next
+      </button>
+    </nav>
+  } @else {
+    <p role="status" class="muted">No customers match your search.</p>
+  }
+}

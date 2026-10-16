@@ -1,0 +1,43 @@
+<section class="sign-in-card card">
+  <h1>Sign in</h1>
+
+  @if (errorMessage(); as message) {
+    <div class="error-banner" role="alert">{{ message }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        formControlName="email"
+        type="email"
+        autocomplete="username"
+        appAutofocus
+      />
+      @if (shouldShowFieldError('email')) {
+        <span class="field-error">A valid email address is required.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" formControlName="password" type="password" autocomplete="current-password" />
+      @if (shouldShowFieldError('password')) {
+        <span class="field-error">The password is required.</span>
+      }
+    </div>
+
+    <button class="button" type="submit" [disabled]="status() === 'submitting'">
+      {{ status() === 'submitting' ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+
+  <div class="demo-accounts" aria-label="Demo accounts">
+    <h2>Demo accounts</h2>
+    <ul>
+      <li><strong>admin&#64;demo.local</strong> / Admin123! — full access</li>
+      <li><strong>reader&#64;demo.local</strong> / Reader123! — read-only access</li>
+    </ul>
+  </div>
+</section>

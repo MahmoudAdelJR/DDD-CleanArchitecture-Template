@@ -1,0 +1,46 @@
+@if (status() === 'loading') {
+  <p role="status" aria-live="polite" class="muted">Loading customer…</p>
+} @else if (status() === 'not-found') {
+  <section class="card">
+    <h1>Customer not found</h1>
+    <p class="muted">This customer does not exist or has been removed.</p>
+    <a class="button" routerLink="/customers">Back to customers</a>
+  </section>
+} @else if (status() === 'error') {
+  <section class="card">
+    <div class="error-banner" role="alert">The customer could not be loaded.</div>
+    <a class="button" routerLink="/customers">Back to customers</a>
+  </section>
+} @else if (customer(); as selectedCustomer) {
+  <header class="page-header">
+    <h1>{{ selectedCustomer.company }}</h1>
+    <a routerLink="/customers">Back to customers</a>
+  </header>
+
+  <dl class="customer-facts card">
+    <div>
+      <dt>Contact</dt>
+      <dd>{{ selectedCustomer.contactName }}</dd>
+    </div>
+    <div>
+      <dt>Email</dt>
+      <dd>{{ selectedCustomer.email }}</dd>
+    </div>
+    <div>
+      <dt>City</dt>
+      <dd>{{ selectedCustomer.city }}</dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd>{{ selectedCustomer.status }}</dd>
+    </div>
+    <div>
+      <dt>Customer since</dt>
+      <dd>{{ selectedCustomer.createdAt | appDateFormat }}</dd>
+    </div>
+    <div>
+      <dt>Notes</dt>
+      <dd>{{ selectedCustomer.notes }}</dd>
+    </div>
+  </dl>
+}

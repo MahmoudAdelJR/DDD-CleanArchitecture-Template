@@ -1,0 +1,24 @@
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="app-bar">
+  <div class="app-bar__brand">
+    <span class="app-bar__title">DDD Template</span>
+    <nav class="app-bar__nav" aria-label="Primary">
+      <a routerLink="/customers" routerLinkActive="active">Customers</a>
+      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+    </nav>
+  </div>
+
+  @if (user(); as signedInUser) {
+    <div class="app-bar__session">
+      <span class="muted">{{ signedInUser.fullName }}</span>
+      <button type="button" class="button button--secondary" (click)="signOut()">
+        Sign out
+      </button>
+    </div>
+  }
+</header>
+
+<main id="main" class="app-content">
+  <router-outlet />
+</main>
