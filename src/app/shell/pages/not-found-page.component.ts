@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-not-found-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <section class="card error-page">
-      <h1>Page not found</h1>
-      <p class="muted">The page you requested does not exist.</p>
-      <a class="button" routerLink="/customers">Go home</a>
+      <h1>{{ 'notFound.title' | tr }}</h1>
+      <p class="muted">{{ 'notFound.body' | tr }}</p>
+      <a class="button" routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
     </section>
   `,
   styles: `

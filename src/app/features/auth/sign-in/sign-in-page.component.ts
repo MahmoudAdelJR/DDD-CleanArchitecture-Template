@@ -2,11 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutofocusDirective } from '../../../shared/directives/autofocus.directive';
+import { FieldErrorComponent } from '../../../shared/forms/field-error.component';
+import { trimmedRequired } from '../../../shared/forms/validators';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { SignInStore } from './sign-in.store';
 
 @Component({
   selector: 'app-sign-in-page',
-  imports: [ReactiveFormsModule, AutofocusDirective],
+  imports: [ReactiveFormsModule, AutofocusDirective, FieldErrorComponent, TranslatePipe],
   templateUrl: './sign-in-page.component.html',
   styleUrl: './sign-in-page.component.scss'
 })
@@ -21,8 +24,8 @@ export class SignInPageComponent {
   protected readonly errorMessage = computed(() => this.store.errorMessage());
 
   protected readonly form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    email: ['', [trimmedRequired(), Validators.email]],
+    password: ['', trimmedRequired()]
   });
 
   protected async submit(): Promise<void> {
@@ -33,7 +36,7 @@ export class SignInPageComponent {
     }
 
     const success = await this.store.submit({
-      email: this.form.controls.email.value!,
+      email: this.form.controls.email.value!.trim(),
       password: this.form.controls.password.value!
     });
 
@@ -46,5 +49,9 @@ export class SignInPageComponent {
   protected shouldShowFieldError(field: 'email' | 'password'): boolean {
     const control = this.form.controls[field];
     return (this.submitted() || control.touched) && control.invalid;
+  }
+
+  protected isInvalid(field: 'email' | 'password'): boolean {
+    return this.form.controls[field].invalid;
   }
 }

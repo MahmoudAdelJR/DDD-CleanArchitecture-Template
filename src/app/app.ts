@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { LoadingBarComponent } from './shared/ui/loading/loading-bar.component';
-import { NotificationHostComponent } from './shared/ui/notification/notification-host.component';
+import { LoadingBarComponent } from './core/ui/loading/loading-bar.component';
+import { NotificationHostComponent } from './core/ui/notification/notification-host.component';
 
 @Component({
   selector: 'app-root',

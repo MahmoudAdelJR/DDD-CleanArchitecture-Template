@@ -1,45 +1,44 @@
 @if (status() === 'loading') {
-  <p role="status" aria-live="polite" class="muted">Loading customer…</p>
+  <p role="status" aria-live="polite" class="muted">{{ 'customers.loading' | tr }}</p>
 } @else if (status() === 'not-found') {
   <section class="card">
-    <h1>Customer not found</h1>
-    <p class="muted">This customer does not exist or has been removed.</p>
-    <a class="button" routerLink="/customers">Back to customers</a>
+    <h1>{{ 'customers.notFoundTitle' | tr }}</h1>
+    <p class="muted">{{ 'customers.notFoundBody' | tr }}</p>
+    <a class="button" routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
   </section>
 } @else if (status() === 'error') {
   <section class="card">
-    <div class="error-banner" role="alert">The customer could not be loaded.</div>
-    <a class="button" routerLink="/customers">Back to customers</a>
+    <div class="error-banner" role="alert">{{ 'customers.loadError' | tr }}</div>
+    <a class="button" routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
   </section>
 } @else if (customer(); as selectedCustomer) {
-  <header class="page-header">
-    <h1>{{ selectedCustomer.company }}</h1>
-    <a routerLink="/customers">Back to customers</a>
-  </header>
+  <app-page-header [title]="selectedCustomer.company">
+    <a routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
+  </app-page-header>
 
   <dl class="customer-facts card">
     <div>
-      <dt>Contact</dt>
+      <dt>{{ 'profile.name' | tr }}</dt>
       <dd>{{ selectedCustomer.contactName }}</dd>
     </div>
     <div>
-      <dt>Email</dt>
+      <dt>{{ 'profile.email' | tr }}</dt>
       <dd>{{ selectedCustomer.email }}</dd>
     </div>
     <div>
-      <dt>City</dt>
+      <dt>{{ 'customers.colCity' | tr }}</dt>
       <dd>{{ selectedCustomer.city }}</dd>
     </div>
     <div>
-      <dt>Status</dt>
+      <dt>{{ 'customers.colStatus' | tr }}</dt>
       <dd>{{ selectedCustomer.status }}</dd>
     </div>
     <div>
-      <dt>Customer since</dt>
+      <dt>{{ 'customers.customerSince' | tr }}</dt>
       <dd>{{ selectedCustomer.createdAt | appDateFormat }}</dd>
     </div>
     <div>
-      <dt>Notes</dt>
+      <dt>{{ 'customers.notes' | tr }}</dt>
       <dd>{{ selectedCustomer.notes }}</dd>
     </div>
   </dl>

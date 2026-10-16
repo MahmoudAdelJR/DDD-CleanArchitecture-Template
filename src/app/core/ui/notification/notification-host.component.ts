@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { AppNotification, NotificationService } from '../../../core/services/notification.service';
+import { AppNotification, NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-notification-host',

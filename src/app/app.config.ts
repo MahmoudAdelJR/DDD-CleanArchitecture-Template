@@ -18,6 +18,8 @@ import { STORAGE } from './core/storage/storage.port';
 import { BrowserStorageAdapter } from './core/storage/browser-storage.adapter';
 import { AuthSessionService } from './core/services/auth-session.service';
 import { provideAuthDataAccess } from './features/auth/data-access/auth-data-access.providers';
+import { provideCoreI18n } from './core/i18n/provide-i18n';
+import { LocaleService } from './core/i18n/locale.service';
 
 /**
  * Interceptor pipeline (outermost first):
@@ -36,8 +38,18 @@ export const appConfig: ApplicationConfig = {
 
     { provide: STORAGE, useClass: BrowserStorageAdapter },
 
+    // Platform i18n: LocaleService adapts the shared TranslationPort,
+    // LOCALE_ID follows the persisted preference at bootstrap.
+    ...provideCoreI18n(),
+
     // Platform-side auth adapters (swap with real HTTP/identity providers).
     ...provideAuthDataAccess(),
+
+    provideAppInitializer(() => {
+      // Construct now so document lang/dir sync and translation lookups are
+      // ready before the first component renders.
+      inject(LocaleService);
+    }),
 
     provideAppInitializer(async () => {
       await inject(AuthSessionService).restoreSession();

@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { AppDatePipe } from '../../../shared/dates/app-date.pipe';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import type { CustomerDetails } from '../data-access/customer.models';
 import { CUSTOMER_REPOSITORY, CustomerNotFoundError } from '../data-access/customer.repository';
 
@@ -8,7 +10,7 @@ type DetailStatus = 'loading' | 'ready' | 'not-found' | 'error';
 
 @Component({
   selector: 'app-customer-detail-page',
-  imports: [RouterLink, DateFormatPipe],
+  imports: [RouterLink, AppDatePipe, TranslatePipe, PageHeaderComponent],
   templateUrl: './customer-detail-page.component.html',
   styleUrl: './customer-detail-page.component.scss'
 })

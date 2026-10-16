@@ -12,7 +12,7 @@ export interface AppConfig {
 export const DEFAULT_APP_CONFIG: AppConfig = {
   apiBaseUrl: '/api',
   trustedOrigins: [],
-  supportedLocales: ['en'],
+  supportedLocales: ['en', 'fr'],
   defaultLocale: 'en'
 };
 

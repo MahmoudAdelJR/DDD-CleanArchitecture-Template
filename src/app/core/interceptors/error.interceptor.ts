@@ -5,6 +5,7 @@ import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { normalizeApiError } from '../http/api-error';
 import { SUPPRESS_GLOBAL_ERROR } from '../http/http-context';
+import { TRANSLATION } from '../../shared/i18n/translation.port';
 import { NotificationService } from '../services/notification.service';
 
 /**
@@ -17,6 +18,7 @@ import { NotificationService } from '../services/notification.service';
  */
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const notification = inject(NotificationService);
+  const translation = inject(TRANSLATION, { optional: true });
 
   return next(request).pipe(
     catchError((error: unknown) => {
@@ -24,7 +26,12 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         return throwError(() => error);
       }
 
-      const apiError = normalizeApiError(error);
+      const apiError = normalizeApiError(
+        error,
+        translation
+          ? (key, params, fallback) => translation.translate(key, params, fallback)
+          : undefined
+      );
 
       if (!request.context.get(SUPPRESS_GLOBAL_ERROR)) {
         notification.error(apiError.message, apiError.code ?? undefined);

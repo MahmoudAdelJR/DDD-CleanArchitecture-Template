@@ -1,25 +1,26 @@
 import { Component, inject } from '@angular/core';
 import { AuthSessionService } from '../../../core/services/auth-session.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-profile-page',
+  imports: [PageHeaderComponent, TranslatePipe],
   template: `
-    <header class="page-header">
-      <h1>Profile</h1>
-    </header>
+    <app-page-header [title]="'profile.title' | tr" />
 
     @if (authSession.user(); as user) {
       <dl class="profile-facts card">
         <div>
-          <dt>Name</dt>
+          <dt>{{ 'profile.name' | tr }}</dt>
           <dd>{{ user.fullName }}</dd>
         </div>
         <div>
-          <dt>Email</dt>
+          <dt>{{ 'profile.email' | tr }}</dt>
           <dd>{{ user.email }}</dd>
         </div>
         <div>
-          <dt>Roles</dt>
+          <dt>{{ 'profile.roles' | tr }}</dt>
           <dd>
             <ul class="tag-list">
               @for (role of user.roles; track role) {
@@ -29,7 +30,7 @@ import { AuthSessionService } from '../../../core/services/auth-session.service'
           </dd>
         </div>
         <div>
-          <dt>Permissions</dt>
+          <dt>{{ 'profile.permissions' | tr }}</dt>
           <dd>
             <ul class="tag-list">
               @for (permission of user.permissions; track permission) {
@@ -40,14 +41,10 @@ import { AuthSessionService } from '../../../core/services/auth-session.service'
         </div>
       </dl>
     } @else {
-      <p class="muted">You are not signed in.</p>
+      <p class="muted">{{ 'profile.signedOut' | tr }}</p>
     }
   `,
   styles: `
-    .page-header {
-      margin-bottom: var(--space-4);
-    }
-
     .profile-facts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

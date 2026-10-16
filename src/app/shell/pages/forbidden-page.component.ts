@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 
 @Component({
   selector: 'app-forbidden-page',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <section class="card error-page" role="alert">
-      <h1>Access denied</h1>
-      <p class="muted">You do not have permission to view this page.</p>
-      <a class="button" routerLink="/customers">Back to customers</a>
+      <h1>{{ 'forbidden.title' | tr }}</h1>
+      <p class="muted">{{ 'forbidden.body' | tr }}</p>
+      <a class="button" routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
     </section>
   `,
   styles: `

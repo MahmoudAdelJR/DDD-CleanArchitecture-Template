@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { LoadingService } from '../../../core/services/loading.service';
+import { LoadingService } from '../../services/loading.service';
 
 /**
  * Thin indeterminate progress bar shown while HTTP requests are pending.

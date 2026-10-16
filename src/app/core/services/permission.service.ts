@@ -9,11 +9,11 @@ export class PermissionService {
     return this.authSession.hasPermission(permission);
   }
 
-  hasAnyPermission(permissions: string[]): boolean {
+  hasAnyPermission(permissions: readonly string[]): boolean {
     return permissions.some(permission => this.hasPermission(permission));
   }
 
-  hasAllPermissions(permissions: string[]): boolean {
+  hasAllPermissions(permissions: readonly string[]): boolean {
     return permissions.every(permission => this.hasPermission(permission));
   }
 }

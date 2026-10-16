@@ -1,5 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+export type MessageResolver = (
+  key: string,
+  params: Record<string, string | number> | undefined,
+  fallback: string
+) => string;
+
 /** RFC 7807 / ASP.NET ProblemDetails envelope (all fields optional by spec). */
 export interface ProblemDetailsBody {
   type?: string;
@@ -22,7 +28,7 @@ export class ApiError {
   ) {}
 }
 
-const DEFAULT_MESSAGES: Record<number, string> = {
+const DEFAULT_MESSAGES: Record<number | string, string> = {
   0: 'The service is unreachable. Check your connection and try again.',
   400: 'The request was rejected. Please review your input.',
   401: 'Your session has expired. Please sign in again.',
@@ -30,23 +36,37 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   404: 'The requested resource was not found.',
   409: 'This record was changed by someone else. Please reload and try again.',
   422: 'The submitted data failed validation. Please review the form.',
-  429: 'Too many requests. Please wait a moment and try again.'
+  429: 'Too many requests. Please wait a moment and try again.',
+  500: 'The server encountered an unexpected error.',
+  generic: 'The request failed.'
 };
 
-export function normalizeApiError(response: HttpErrorResponse): ApiError {
+export function normalizeApiError(
+  response: HttpErrorResponse,
+  resolveMessage?: MessageResolver
+): ApiError {
+  const t: MessageResolver = resolveMessage
+    ? resolveMessage
+    : (_key, _params, fallback) => fallback;
+
   const body = parseProblemDetails(response.error);
   const validationErrors = extractValidationErrors(body);
   const correlationId =
     body?.traceId ?? response.headers.get('x-correlation-id') ?? response.headers.get('traceparent');
   const code = body?.code ?? (body?.type ? lastUrlSegment(body.type) : null);
 
+  const statusFallback =
+    response.status === 0
+      ? DEFAULT_MESSAGES[0]
+      : DEFAULT_MESSAGES[response.status] ??
+        (response.status >= 500 ? DEFAULT_MESSAGES[500] : DEFAULT_MESSAGES['generic']);
+
   const message =
     flattenValidationMessages(validationErrors) ??
-    (response.status === 0 ? DEFAULT_MESSAGES[0] : null) ??
+    (response.status === 0 ? t('http.0', undefined, DEFAULT_MESSAGES[0]) : null) ??
     body?.detail ??
     body?.title ??
-    DEFAULT_MESSAGES[response.status] ??
-    (response.status >= 500 ? 'The server encountered an unexpected error.' : 'The request failed.');
+    t(`http.${response.status}`, undefined, statusFallback);
 
   return new ApiError(response.status, message, code ?? null, validationErrors, correlationId, response);
 }

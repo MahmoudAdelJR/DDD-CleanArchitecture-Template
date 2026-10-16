@@ -1,22 +1,23 @@
-<a class="skip-link" href="#main">Skip to main content</a>
+<a class="skip-link" href="#main">{{ 'nav.skipToContent' | tr }}</a>
 
 <header class="app-bar">
   <div class="app-bar__brand">
-    <span class="app-bar__title">DDD Template</span>
-    <nav class="app-bar__nav" aria-label="Primary">
-      <a routerLink="/customers" routerLinkActive="active">Customers</a>
-      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+    <span class="app-bar__title">{{ 'app.title' | tr }}</span>
+    <nav class="app-bar__nav" [attr.aria-label]="'nav.primary' | tr">
+      <a routerLink="/customers" routerLinkActive="active">{{ 'nav.customers' | tr }}</a>
+      <a routerLink="/profile" routerLinkActive="active">{{ 'nav.profile' | tr }}</a>
     </nav>
   </div>
 
-  @if (user(); as signedInUser) {
-    <div class="app-bar__session">
+  <div class="app-bar__session">
+    <app-locale-switcher />
+    @if (user(); as signedInUser) {
       <span class="muted">{{ signedInUser.fullName }}</span>
       <button type="button" class="button button--secondary" (click)="signOut()">
-        Sign out
+        {{ 'nav.signOut' | tr }}
       </button>
-    </div>
-  }
+    }
+  </div>
 </header>
 
 <main id="main" class="app-content">
