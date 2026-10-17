@@ -5,6 +5,7 @@ import { AutofocusDirective } from '../../../shared/directives/autofocus.directi
 import { FieldErrorComponent } from '../../../shared/forms/field-error.component';
 import { trimmedRequired } from '../../../shared/forms/validators';
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { DEMO_ACCOUNT_HINTS } from './demo-accounts';
 import { SignInStore } from './sign-in.store';
 
 @Component({
@@ -22,6 +23,7 @@ export class SignInPageComponent {
   protected readonly submitted = signal(false);
   protected readonly status = computed(() => this.store.status());
   protected readonly errorMessage = computed(() => this.store.errorMessage());
+  protected readonly demoAccountHints = DEMO_ACCOUNT_HINTS;
 
   protected readonly form = this.fb.group({
     email: ['', [trimmedRequired(), Validators.email]],

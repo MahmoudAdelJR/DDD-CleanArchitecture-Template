@@ -9,6 +9,7 @@ template. Boundary enforcement is automated: ESLint import zones plus
 ```text
 src/app/
   app.config.ts / app.routes.ts   Composition root only
+  backend-interceptors.ts         Build-swapped backend interceptor wiring
   core/                           Session, guards, interceptors, HTTP plumbing
   shell/                          Application layout and global pages
   features/<name>/                Vertical slices (routes, pages, store, data-access)
@@ -30,8 +31,8 @@ src/app/
 Enforcement is layered: ESLint `import/no-restricted-paths` zones check
 resolved import paths (relative imports cannot dodge them), and
 `npm run check:architecture` fails CI when a feature folder lacks its zone
-or its lazy route wiring. `app.config.ts` is the only place allowed to wire
-`dev/` tooling.
+or its lazy route wiring. `app.config.ts` and `backend-interceptors.ts` are the
+only modules allowed to wire `dev/` tooling.
 
 `shared` currently depends on nothing app-specific: forms, dates, i18n
 port + pipe, and pure UI primitives consume framework APIs and app-local
@@ -158,23 +159,35 @@ Request-level opt-outs live in `core/http/http-context.ts`:
   adapter, tomorrow by a real token endpoint)
 - failed refresh or corrupt persisted state clears the session
 
-## Swapping the in-memory fakes
+## Demo vs production composition
 
-The template ships with in-memory adapters so it runs without a backend:
+The template ships with in-memory adapters so it runs without a backend. Demo
+and production wiring are selected at **build time** via `fileReplacements` in
+`angular.json`'s `production` configuration (ADR-0006) — the demo modules are
+not merely disabled, they are absent from the production module graph:
 
-- `features/auth/data-access/auth-data-access.providers.ts` binds
-  `AUTHENTICATION_PORT` and `SESSION_REFRESH_PORT` to `FakeAuthenticationAdapter`
-  at root. Replace both bindings with one HTTP identity adapter (sign-in +
-  refresh endpoints).
-- `features/customers/data-access/in-memory-customer.repository.ts` — bound to
-  `CUSTOMER_REPOSITORY` in `customers.routes.ts`. The real-backend sibling
-  `customer-http.repository.ts` (over `BaseHttpService`) is already implemented;
-  swapping is one provider line.
+| Seam                | Demo default (file)                                                 | Production override (`.production.ts`)             |
+| ------------------- | ------------------------------------------------------------------- | -------------------------------------------------- |
+| Auth ports          | `features/auth/data-access/auth-data-access.providers.ts`           | real `HttpAuthenticationAdapter` (sign-in/refresh) |
+| Customer repository | `features/customers/data-access/customers-data-access.providers.ts` | `CustomerHttpRepository`                           |
+| Backend mocks       | `src/app/backend-interceptors.ts`                                   | none                                               |
+| Login demo hints    | `features/auth/sign-in/demo-accounts.ts`                            | empty list                                         |
 
-To exercise the real HTTP path without a backend, set `AppConfig.mockApi:
-true`: `src/app/dev/mock-api.interceptor.ts` answers trusted `/api` requests
-from `mock-fixtures.ts` through the full interceptor pipeline. Only the
-composition root may wire `dev/` (zone-enforced); it ships dormant by default.
+Files without the `.production` suffix are the development/demo default, so
+`npm start`, unit tests, and E2E stay backend-free. Two authorities keep this
+honest:
+
+- `HttpAuthenticationAdapter` implements `AuthenticationPort` + `SessionRefreshPort`
+  over `HttpClient`, marking requests with `SKIP_AUTH` so a failing refresh can
+  never recurse, and normalizing responses/errors into `SessionPayload` /
+  `SignInFailure`.
+- `npm run check:prod-bundle` scans `dist/` and fails if any demo credential or
+  fixture string survives the production build.
+
+To exercise the real HTTP path without a backend, set `AppConfig.mockApi: true`
+in development: `src/app/dev/mock-api.interceptor.ts` (wired by
+`backend-interceptors.ts`) answers trusted `/api` requests from
+`mock-fixtures.ts` through the full interceptor pipeline.
 
 Step-by-step: `docs/recipes/backend-cutover.md`.
 
@@ -211,7 +224,8 @@ operation independently. See `docs/SECURITY.md`.
 `lint` (includes the architecture boundary zones) → `check:architecture`
 (slices wired: folder ↔ zone ↔ lazy route) → `typecheck` (app, specs,
 e2e) → `test:ci` with an **80% line-coverage gate** → production `build`
-(bundle budgets enforced by `angular.json`) → dependency audit
+(bundle budgets enforced by `angular.json`) → `check:prod-bundle` (no demo
+credentials or fixtures in `dist/`) → dependency audit
 (`audit:ci` for production + `node scripts/audit-allowlist.mjs` which fails
 closed on un-allowlisted high/critical advisories; dev-only exceptions must
 carry a reason and an expiry in `audit-allowlist.json`). The `e2e` job runs
@@ -234,6 +248,9 @@ immutable caching, no-cache `index.html`, gzip, security headers incl. CSP
 (with the `style-src` tradeoff documented), `/healthz`, and rollback notes.
 
 ## Demo accounts
+
+These exist only in development/demo builds — the production build replaces
+`demo-accounts.ts` with an empty list (ADR-0006).
 
 | Email             | Password   | Permissions                     |
 | ----------------- | ---------- | ------------------------------- |

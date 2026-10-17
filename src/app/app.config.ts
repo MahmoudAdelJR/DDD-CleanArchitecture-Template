@@ -30,17 +30,19 @@ import {
   correlationInterceptor,
   generateCorrelationId,
 } from './core/telemetry/correlation.interceptor';
-import { mockApiInterceptor } from './dev/mock-api.interceptor';
+import { provideBackendInterceptors } from './backend-interceptors';
 import { ErrorHandler } from '@angular/core';
 
 /**
  * Interceptor pipeline (outermost first):
- *   loading -> error -> language -> correlation -> auth -> mock -> backend
+ *   loading -> error -> language -> correlation -> auth -> backend[*]
  *
  * The innermost auth interceptor refreshes and retries on 401, so the error
  * interceptor only notifies/logs failures that survive the retry.
- * The dev mock interceptor answers trusted requests when AppConfig.mockApi
- * is true and otherwise passes everything through to the real backend.
+ * The backend interceptors come from `./backend-interceptors`, which the
+ * production build swaps for a mock-free implementation (fileReplacements):
+ * in development the dev mock answers trusted requests when AppConfig.mockApi
+ * is true, and in production nothing mock-related is bundled at all.
  */
 export function createAppConfig(runtimeConfig: AppConfig): ApplicationConfig {
   return {
@@ -85,7 +87,7 @@ export function createAppConfig(runtimeConfig: AppConfig): ApplicationConfig {
           languageInterceptor,
           correlationInterceptor,
           authInterceptor,
-          mockApiInterceptor,
+          ...provideBackendInterceptors(),
         ]),
       ),
     ],

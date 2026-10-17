@@ -17,13 +17,18 @@ deployment values described in `docs/recipes/runtime-config.md`:
 
 ## 2. Real identity endpoints
 
-Implement `AuthenticationPort` + `SessionRefreshPort`
-(`features/auth/data-access/authentication.port.ts`,
-`core/auth/session-refresh.port.ts`) once — e.g. `HttpAuthenticationAdapter`
-calling `POST /auth/sign-in` / `POST /auth/refresh` and mapping responses to
-`SessionPayload` (`user`, `accessToken`, `refreshToken`, `expiresAt` in ms).
-Then swap the bindings in
-`features/auth/data-access/auth-data-access.providers.ts`:
+The template already ships a production adapter:
+`features/auth/data-access/http-authentication.adapter.ts` implements both
+`AuthenticationPort` and `SessionRefreshPort` (`POST /auth/sign-in`,
+`POST /auth/refresh` mapped to `SessionPayload` — `user`, `accessToken`,
+`refreshToken`, `expiresAt` in ms). It runs every auth request with `SKIP_AUTH`
+so the interceptor never recurses into a refresh.
+
+That adapter is bound in `auth-data-access.providers.production.ts`, which the
+`production` build swaps in for the demo bindings (see
+`fileReplacements` in `angular.json` and ADR-0006). To adopt it with a
+different transport, edit the adapter and keep both ports bound to the same
+instance:
 
 ```ts
 export function provideAuthDataAccess(): Provider[] {
@@ -42,18 +47,24 @@ pipeline, and document the CSRF strategy in an ADR.
 
 ## 3. Real data access
 
-`CustomerHttpRepository` (`features/customers/data-access/`) already
-implements the port over `BaseHttpService`. Swap the binding:
+`CustomerHttpRepository` (`features/customers/data-access/`) already implements
+the port over `BaseHttpService`. It is bound in
+`customers-data-access.providers.production.ts`, which the production build
+swaps in for the in-memory fake:
 
 ```ts
-const customersDataAccessProviders: Provider[] = [
+export const customersDataAccessProviders: Provider[] = [
   { provide: CUSTOMER_REPOSITORY, useClass: CustomerHttpRepository },
 ];
 ```
 
-Do the same for every generated slice. Then re-point that slice's
+Do the same for every generated slice (add a `*.production.ts` seam and a
+matching `fileReplacements` entry). Then re-point that slice's
 `*.contract.spec.ts` at a staging backend (or generated OpenAPI client) to
 detect drift against the pinned transport shape.
+
+`npm run check:prod-bundle` fails the build if a demo adapter, credential, or
+fixture string survives into `dist/`.
 
 ## 4. Develop against fixtures without a backend
 

@@ -6,6 +6,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-17
+
+### Added
+
+- Build-time demo/production composition (ADR-0006): the production build
+  swaps demo adapters, the dev mock backend, and the login demo hints for
+  production implementations via `fileReplacements` in `angular.json`, so demo
+  code is absent from — not merely disabled in — the production bundle.
+- `HttpAuthenticationAdapter`: real identity adapter implementing
+  `AuthenticationPort` + `SessionRefreshPort` over `POST /auth/sign-in` and
+  `POST /auth/refresh`, with `SKIP_AUTH` (prevents recursive refresh) and
+  defensive response normalization into `SessionPayload` / `SignInFailure`.
+- `npm run check:prod-bundle`: scans `dist/` and fails if demo credentials or
+  fixtures survive the production build (wired into CI).
+- Unit coverage for the HTTP auth adapter (sign-in, refresh, refused and
+  malformed responses, ISO-8601 expiry parsing).
+
+### Changed
+
+- `app.config.ts` composes backend interceptors from
+  `src/app/backend-interceptors.ts` instead of importing the dev mock directly.
+
+### Fixed
+
+- Demo credentials are no longer rendered by the login page in production
+  builds.
+
 ## [1.3.1] - 2026-10-17
 
 ### Fixed

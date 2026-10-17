@@ -30,6 +30,24 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/backend-interceptors.ts",
+                  "with": "src/app/backend-interceptors.production.ts"
+                },
+                {
+                  "replace": "src/app/features/auth/data-access/auth-data-access.providers.ts",
+                  "with": "src/app/features/auth/data-access/auth-data-access.providers.production.ts"
+                },
+                {
+                  "replace": "src/app/features/customers/data-access/customers-data-access.providers.ts",
+                  "with": "src/app/features/customers/data-access/customers-data-access.providers.production.ts"
+                },
+                {
+                  "replace": "src/app/features/auth/sign-in/demo-accounts.ts",
+                  "with": "src/app/features/auth/sign-in/demo-accounts.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

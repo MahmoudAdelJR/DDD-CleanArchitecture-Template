@@ -10,3 +10,4 @@ new decision; never edit an accepted ADR — supersede it instead.
 | [0003](0003-ports-and-adapters-with-fake-backends.md)    | Ports & adapters with fake backends as the API seam     | Accepted |
 | [0004](0004-interceptor-ordering-and-401-refresh.md)     | Interceptor ordering and single-flight 401 refresh      | Accepted |
 | [0005](0005-generated-slices-and-enforced-boundaries.md) | Generator-produced slices with enforced boundaries      | Accepted |
+| [0006](0006-build-time-demo-production-composition.md)   | Build-time demo/production provider composition         | Accepted |

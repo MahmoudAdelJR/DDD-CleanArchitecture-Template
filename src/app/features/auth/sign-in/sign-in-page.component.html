@@ -52,11 +52,17 @@
     </button>
   </form>
 
-  <div class="demo-accounts">
-    <h2>{{ 'auth.demoTitle' | tr }}</h2>
-    <ul>
-      <li><strong>admin&#64;demo.local</strong> / Admin123! — {{ 'auth.demoFullAccess' | tr }}</li>
-      <li><strong>reader&#64;demo.local</strong> / Reader123! — {{ 'auth.demoReadOnly' | tr }}</li>
-    </ul>
-  </div>
+  @if (demoAccountHints.length > 0) {
+    <div class="demo-accounts">
+      <h2>{{ 'auth.demoTitle' | tr }}</h2>
+      <ul>
+        @for (account of demoAccountHints; track account.email) {
+          <li>
+            <strong>{{ account.email }}</strong> / {{ account.password }} —
+            {{ account.labelKey | tr }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
 </section>

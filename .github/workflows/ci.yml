@@ -60,6 +60,9 @@ jobs:
       - name: Production build (enforces bundle budgets)
         run: npm run build
 
+      - name: Production bundle guard (no demo credentials or fixtures)
+        run: npm run check:prod-bundle
+
       - name: Dependency audit (production must be clean; dev needs allowlisted advisories)
         run: |
           npm run audit:ci
