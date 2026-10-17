@@ -23,7 +23,9 @@ must never be the only thing deciding anything sensitive.
   stack traces never surface to users; correlation IDs aid forensics.
 - Production build path: `deploy/` ships CSP (incl. `frame-ancestors 'none'`),
   nosniff, referrer/permissions policy, no-cache HTML, immutable hashed
-  assets; enable HSTS once TLS exists.
+  assets; enable HSTS once TLS exists. `connect-src` is generated from
+  `APP_CSP_CONNECT_SRC` at container start and must list every API origin —
+  keep it in sync with `trustedOrigins`.
 - Runtime config is schema-validated before bootstrap, fetched without caching,
   and fails closed except for an intentional `404` defaults fallback. It is
   public browser data: never place credentials or secrets in it, and treat
@@ -31,7 +33,7 @@ must never be the only thing deciding anything sensitive.
 - CI dependency gates: production `npm audit` must report zero high; dev
   exceptions require reason + expiry in `audit-allowlist.json`.
 - CSP note: component styles require `style-src 'unsafe-inline'` unless the
-  build extracts them — see `deploy/security-headers.conf`.
+  build extracts them — see `deploy/security-headers.conf.template`.
 
 ## Things a consuming team must decide (not template defaults)
 

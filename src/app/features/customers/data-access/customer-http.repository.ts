@@ -1,7 +1,7 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { APP_CONFIG } from '../../../core/config/app-config';
+import { isApiError } from '../../../core/http/api-error';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { PagedList } from '../../../shared/models/paged-list.model';
 import type { CustomerDetails, CustomerSearch, CustomerSummary } from './customer.models';
@@ -35,7 +35,8 @@ export class CustomerHttpRepository extends BaseHttpService implements CustomerR
     try {
       return await firstValueFrom(this.get<CustomerDetails>(this.customersUrl(`/${id}`)));
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 404) {
+      // The global error interceptor rethrows ApiError, not HttpErrorResponse.
+      if (isApiError(error) && error.status === 404) {
         throw new CustomerNotFoundError(id);
       }
       throw error;

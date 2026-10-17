@@ -6,6 +6,30 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-17
+
+### Fixed
+
+- HTTP repositories now consume the normalized `ApiError` thrown by the error
+  interceptor instead of a raw `HttpErrorResponse`. Real-backend
+  `CustomerNotFoundError` mapping previously only worked when the interceptor
+  chain was absent, so 404s fell through to a generic error in production.
+- Backend `detail`/`title` values from 5xx responses are no longer surfaced to
+  users; only the localized catalog message is used. `code`, correlation id, and
+  4xx validation messages still flow through unchanged.
+- Production CSP `connect-src` is generated from `APP_CSP_CONNECT_SRC` at
+  container start, so an API origin allowed by runtime configuration is no
+  longer blocked in production.
+
+### Added
+
+- `AppConfig.apiBaseUrl` validation: it must be a same-origin path or an
+  absolute `http(s)` URL; protocol-relative and credential-bearing URLs are
+  rejected, an absolute origin must be listed in `trustedOrigins`, and trailing
+  slashes are normalized.
+- Test coverage for the `ApiError` contract (repository behind the real
+  interceptor pipeline), safe 5xx messages, and API base URL validation.
+
 ## [1.3.0] - 2026-10-17
 
 ### Added

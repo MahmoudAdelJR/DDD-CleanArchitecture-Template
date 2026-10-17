@@ -89,6 +89,16 @@ describe('errorInterceptor', () => {
     expect(apiError.message).toBe('The server encountered an unexpected error.');
   });
 
+  it('does not leak problem-details detail/title for 5xx responses', async () => {
+    const apiError = await requestWithError(
+      { title: 'Internal Server Error', detail: 'SqlException at OrdersController' },
+      503,
+    );
+
+    expect(apiError.message).toBe('The server encountered an unexpected error.');
+    expect(apiError.message).not.toContain('SqlException');
+  });
+
   it('reports an unreachable service for network failures', async () => {
     const apiError = await new Promise<ApiError>((resolve) => {
       http.get('/api/resource').subscribe({

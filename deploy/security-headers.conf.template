@@ -1,6 +1,11 @@
 # Security headers applied to every response. Re-include inside any location
 # block that sets its own add_header directives (nginx does not inherit
 # add_header when a block declares its own).
+#
+# This file is an envsubst template: the nginx image renders it to
+# /etc/nginx/security-headers.conf at container start, substituting
+# APP_CSP_CONNECT_SRC below. Keep connect-src in sync with the runtime config's
+# apiBaseUrl/trustedOrigins (see deploy/README.md).
 
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -10,7 +15,10 @@ add_header X-Frame-Options "DENY" always;
 # Angular's default build injects component styles as <style> tags at runtime,
 # so style-src needs 'unsafe-inline' unless styles: { inlineCritical: false }
 # and extractStyles are configured to emit only hashed CSS files.
-add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
+#
+# connect-src is generated so one image can call a same-origin API ('self') or
+# an explicitly approved cross-origin API without a rebuild.
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src ${APP_CSP_CONNECT_SRC}; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
 
 # Enable once served over TLS (typically also at the load balancer):
 # add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;

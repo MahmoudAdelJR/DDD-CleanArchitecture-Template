@@ -24,10 +24,30 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('core.AppConfig');
 
+/**
+ * Returns a normalized copy of the config: `apiBaseUrl` loses any trailing
+ * slash (so `${apiBaseUrl}/customers` never becomes `//customers`) and the
+ * arrays are cloned so callers cannot mutate shared state.
+ */
+export function normalizeAppConfig(config: AppConfig): AppConfig {
+  return {
+    ...config,
+    apiBaseUrl: trimTrailingSlashes(config.apiBaseUrl),
+    trustedOrigins: [...config.trustedOrigins],
+    supportedLocales: [...config.supportedLocales],
+  };
+}
+
+function trimTrailingSlashes(value: string): string {
+  return value.trim().replace(/\/+$/, '');
+}
+
 export function validateAppConfig(config: AppConfig): void {
   if (typeof config.apiBaseUrl !== 'string' || !config.apiBaseUrl.trim()) {
     throw new Error('AppConfig.apiBaseUrl must be a non-empty string.');
   }
+
+  validateApiBaseUrl(config.apiBaseUrl, config.trustedOrigins);
 
   if (
     !Array.isArray(config.supportedLocales) ||
@@ -76,9 +96,56 @@ export function validateAppConfig(config: AppConfig): void {
   }
 }
 
+/**
+ * `apiBaseUrl` is either a same-origin path (`/api`) or an absolute http(s)
+ * URL. An absolute URL must be an origin listed in `trustedOrigins`,
+ * otherwise every request would be credential-free by design.
+ */
+function validateApiBaseUrl(apiBaseUrl: string, trustedOrigins: string[]): void {
+  const value = trimTrailingSlashes(apiBaseUrl);
+
+  if (!value) {
+    throw new Error(
+      'AppConfig.apiBaseUrl must be a non-empty same-origin path or absolute http(s) URL.',
+    );
+  }
+
+  if (value.startsWith('//')) {
+    throw new Error('AppConfig.apiBaseUrl must not be protocol-relative.');
+  }
+
+  if (value.startsWith('/')) {
+    return;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(
+      `AppConfig.apiBaseUrl must be a same-origin path or absolute http(s) URL, got "${apiBaseUrl}".`,
+    );
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error(`AppConfig.apiBaseUrl must use http(s): "${apiBaseUrl}".`);
+  }
+
+  if (parsed.username || parsed.password) {
+    throw new Error('AppConfig.apiBaseUrl must not contain credentials.');
+  }
+
+  if (!trustedOrigins.includes(parsed.origin)) {
+    throw new Error(
+      `AppConfig.apiBaseUrl origin "${parsed.origin}" must be listed in trustedOrigins.`,
+    );
+  }
+}
+
 export function provideAppConfig(config: AppConfig): Provider {
-  validateAppConfig(config);
-  return { provide: APP_CONFIG, useValue: config };
+  const normalized = normalizeAppConfig(config);
+  validateAppConfig(normalized);
+  return { provide: APP_CONFIG, useValue: normalized };
 }
 
 /**

@@ -23,6 +23,16 @@ Unknown properties and invalid values stop application startup. A missing file
 (`404`) deliberately falls back to defaults; other HTTP failures and malformed
 JSON fail closed. The request uses `cache: "no-store"`.
 
+`apiBaseUrl` is either a same-origin path (`/api`) or an absolute `http(s)`
+URL. An absolute URL must have its origin listed in `trustedOrigins`, otherwise
+the app refuses to start — this keeps credential attachment and the API target
+from drifting apart. Trailing slashes are normalized away.
+
+When hosting behind the reference nginx image, the browser's Content-Security
+Policy also has to allow the API origin: set `APP_CSP_CONNECT_SRC` to include
+every origin the app calls (see `deploy/README.md`). A same-origin `/api`
+behind a reverse proxy needs only the default `'self'`.
+
 ## Static hosting
 
 Replace `config/app-config.json` as a deployment step after building. Serve it

@@ -28,6 +28,16 @@ export class ApiError {
   ) {}
 }
 
+/**
+ * Stable downstream error contract. The global error interceptor normalizes
+ * every HttpErrorResponse into an ApiError before feature code sees it, so
+ * repositories and stores must branch on this type — never on the raw
+ * HttpErrorResponse, which no longer crosses the interceptor boundary.
+ */
+export function isApiError(value: unknown): value is ApiError {
+  return value instanceof ApiError;
+}
+
 const DEFAULT_MESSAGES: Record<number | string, string> = {
   0: 'The service is unreachable. Check your connection and try again.',
   400: 'The request was rejected. Please review your input.',
@@ -63,12 +73,16 @@ export function normalizeApiError(
       : (DEFAULT_MESSAGES[response.status] ??
         (response.status >= 500 ? DEFAULT_MESSAGES[500] : DEFAULT_MESSAGES['generic']));
 
-  const message =
-    flattenValidationMessages(validationErrors) ??
-    (response.status === 0 ? t('http.0', undefined, DEFAULT_MESSAGES[0]) : null) ??
-    body?.detail ??
-    body?.title ??
-    t(`http.${response.status}`, undefined, statusFallback);
+  // Server failures (network error or 5xx) must never leak backend-generated
+  // detail/title — those can contain stack traces or internal identifiers.
+  // Only the catalog message (or the caller's resolver) is shown to users.
+  const serverFailure = response.status === 0 || response.status >= 500;
+  const message = serverFailure
+    ? t(`http.${response.status}`, undefined, statusFallback)
+    : (flattenValidationMessages(validationErrors) ??
+      body?.detail ??
+      body?.title ??
+      t(`http.${response.status}`, undefined, statusFallback));
 
   return new ApiError(
     response.status,
