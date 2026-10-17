@@ -48,6 +48,7 @@ const TEMPLATE_FILES = {
   'docs/recipes/pwa.md': 'keys app.session.v1 and app.language matter for cache\n',
   'deploy/README.md': 'docker build -t ddd-template-web:local .\n',
   'src/app/core/config/app-config.ts': "apiBaseUrl: '/api',\ndefaultLocale: 'en',\n",
+  'public/config/app-config.json': '{}\n',
   'src/app/app.routes.ts': 'export const routes = [\n  // gen:app-route — marker\n];\n',
   'eslint.config.mjs': 'export default [{ rules: {} }]; // gen:feature-zones — marker\n',
 };
@@ -163,12 +164,10 @@ describe('init:project success', () => {
     assert.equal(JSON.parse(read(root, 'package.json')).name, 'acme-web');
     assert.equal(JSON.parse(read(root, 'package.json')).version, '2.0.0');
     assert.ok(read(root, 'angular.json').includes('acmeNg'));
-    assert.ok(
-      read(root, 'src/app/core/config/app-config.ts').includes(
-        "apiBaseUrl: 'https://api.acme.test'",
-      ),
-    );
-    assert.ok(read(root, 'src/app/core/config/app-config.ts').includes("defaultLocale: 'fr'"));
+    const runtimeConfig = JSON.parse(read(root, 'public/config/app-config.json'));
+    assert.equal(runtimeConfig.apiBaseUrl, 'https://api.acme.test');
+    assert.equal(runtimeConfig.defaultLocale, 'fr');
+    assert.ok(read(root, 'src/app/core/config/app-config.ts').includes("apiBaseUrl: '/api'"));
     assert.ok(read(root, 'src/index.html').includes('<html lang="fr">'));
   });
 });

@@ -51,8 +51,7 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
 
 5. Customize what `init:project` deliberately leaves alone:
    - [ ] Visual branding: favicon, design tokens in `src/styles.scss`, nav labels
-   - [ ] Runtime config beyond `apiBaseUrl`: `trustedOrigins`, `supportedLocales`
-         in [app-config.ts](src/app/core/config/app-config.ts)
+   - [ ] Runtime config: follow [docs/recipes/runtime-config.md](docs/recipes/runtime-config.md)
    - [ ] Backend: follow [docs/recipes/backend-cutover.md](docs/recipes/backend-cutover.md)
    - [ ] Deployment: [deploy/](deploy/README.md) (nginx reference)
    - [ ] Security contact: [docs/SECURITY.md](docs/SECURITY.md)
@@ -93,7 +92,7 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
 - [docs/adr/](docs/adr/README.md) — architectural decision records (why things are the way they are)
 - [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — first-10-minutes guide and PR gate checklist
 - [docs/SECURITY.md](docs/SECURITY.md) — threat model notes and hardening posture
-- [docs/recipes/](docs/recipes/) — backend cutover, feature flags, SSR, PWA
+- [docs/recipes/](docs/recipes/) — runtime config, backend cutover, feature flags, SSR, PWA
 - [deploy/](deploy/README.md) — containerized nginx production reference
 - [CHANGELOG.md](CHANGELOG.md) — release history
 - [ARCHITECTURE_IMPROVEMENT_PLAN.md](ARCHITECTURE_IMPROVEMENT_PLAN.md) — historical roadmap the template was built from (kept for rationale; phases are all implemented)

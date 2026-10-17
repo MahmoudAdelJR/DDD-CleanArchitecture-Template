@@ -6,6 +6,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-17
+
+### Added
+
+- Deployment-time runtime configuration from `config/app-config.json`, loaded
+  and validated before Angular bootstrap. Partial config overlays safe defaults;
+  malformed JSON, unknown keys, invalid values, and non-404 HTTP errors stop
+  startup with an accessible error message.
+- nginx container environment variables generate runtime config on each start,
+  allowing one immutable image to be promoted across environments.
+- Runtime configuration recipe and security guidance.
+
+### Changed
+
+- `init:project --api-base-url` and `--default-locale` now write the runtime
+  config asset instead of changing compiled TypeScript defaults.
+
 ## [1.2.0] - 2026-10-16
 
 ### Added

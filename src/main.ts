@@ -1,5 +1,18 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
+import { createAppConfig } from './app/app.config';
 import { App } from './app/app';
+import { loadRuntimeAppConfig } from './app/core/config/runtime-app-config';
 
-bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+async function bootstrap(): Promise<void> {
+  const runtimeConfig = await loadRuntimeAppConfig();
+  await bootstrapApplication(App, createAppConfig(runtimeConfig));
+}
+
+void bootstrap().catch((error: unknown) => {
+  console.error('Application bootstrap failed.', error);
+  const host = document.querySelector('app-root');
+  if (host) {
+    host.textContent = 'The application could not start. Check the runtime configuration.';
+    host.setAttribute('role', 'alert');
+  }
+});

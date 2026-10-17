@@ -8,7 +8,10 @@ headers, and a health endpoint.
 
 ```bash
 docker build -f deploy/Dockerfile -t ddd-template-web:local .
-docker run --rm -p 8080:8080 ddd-template-web:local
+docker run --rm -p 8080:8080 \
+  -e APP_API_BASE_URL=https://api.example.com/v1 \
+  -e 'APP_TRUSTED_ORIGINS=["https://api.example.com"]' \
+  ddd-template-web:local
 # → http://localhost:8080
 ```
 
@@ -20,16 +23,29 @@ docker run --rm -p 8080:8080 ddd-template-web:local
 | Compression          | gzip for js/css/json/svg (add brotli with a brotli-enabled image)          |
 | Cache: hashed assets | `max-age=31536000, immutable` (`outputHashing: all` in prod builds)        |
 | Cache: index.html    | `no-cache, no-store` — deploys appear on next request                      |
+| Runtime config       | `/config/app-config.json`, generated at container start and never cached   |
 | Security headers     | see `security-headers.conf` (CSP, nosniff, referrer, permissions, framing) |
 | Health check         | `GET /healthz` used by Docker HEALTHCHECK and orchestrators                |
 | Non-root port        | listens on 8080 for container platforms that drop root                     |
 
 ## Runtime configuration
 
-`AppConfig` (`src/app/core/config/app-config.ts`) is compile-time today. For
-per-environment promotion without rebuilds, add a bootstrap step that fetches
-`/config.json` in `provideAppInitializer` and supplies it via
-`provideAppConfig(...)`, keeping `validateAppConfig` before the app starts.
+The browser loads `config/app-config.json` before Angular bootstraps. The
+nginx image generates that file from environment variables on every start,
+so the same immutable image can be promoted through environments:
+
+| Variable                | Default       | Format                              |
+| ----------------------- | ------------- | ----------------------------------- |
+| `APP_API_BASE_URL`      | `/api`        | URL or same-origin path             |
+| `APP_TRUSTED_ORIGINS`   | `[]`          | JSON array of bare absolute origins |
+| `APP_SUPPORTED_LOCALES` | `["en","fr"]` | JSON array                          |
+| `APP_DEFAULT_LOCALE`    | `en`          | Must appear in supported locales    |
+| `APP_MOCK_API`          | `false`       | JSON boolean; keep false in prod    |
+
+For non-container hosting, replace `config/app-config.json` during deployment.
+It may contain any subset of `AppConfig`; omitted keys use the safe defaults
+from `app-config.ts`. A missing file (`404`) also uses defaults, while malformed
+JSON, unknown keys, invalid origins, and other HTTP failures stop startup.
 
 ## TLS and HSTS
 

@@ -25,15 +25,38 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
 export const APP_CONFIG = new InjectionToken<AppConfig>('core.AppConfig');
 
 export function validateAppConfig(config: AppConfig): void {
-  if (!config.apiBaseUrl) {
+  if (typeof config.apiBaseUrl !== 'string' || !config.apiBaseUrl.trim()) {
     throw new Error('AppConfig.apiBaseUrl must be a non-empty string.');
+  }
+
+  if (
+    !Array.isArray(config.supportedLocales) ||
+    config.supportedLocales.length === 0 ||
+    config.supportedLocales.some((locale) => typeof locale !== 'string' || !locale.trim())
+  ) {
+    throw new Error('AppConfig.supportedLocales must be a non-empty string array.');
+  }
+
+  if (typeof config.defaultLocale !== 'string') {
+    throw new Error('AppConfig.defaultLocale must be a string.');
   }
 
   if (!config.supportedLocales.includes(config.defaultLocale)) {
     throw new Error('AppConfig.defaultLocale must be included in supportedLocales.');
   }
 
+  if (!Array.isArray(config.trustedOrigins)) {
+    throw new Error('AppConfig.trustedOrigins must be a string array.');
+  }
+
+  if (config.mockApi !== undefined && typeof config.mockApi !== 'boolean') {
+    throw new Error('AppConfig.mockApi must be a boolean when provided.');
+  }
+
   for (const origin of config.trustedOrigins) {
+    if (typeof origin !== 'string') {
+      throw new Error('AppConfig.trustedOrigins must be a string array.');
+    }
     let parsed: URL;
     try {
       parsed = new URL(origin);

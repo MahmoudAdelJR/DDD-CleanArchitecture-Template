@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "${APP_API_BASE_URL}",
+  "trustedOrigins": ${APP_TRUSTED_ORIGINS},
+  "supportedLocales": ${APP_SUPPORTED_LOCALES},
+  "defaultLocale": "${APP_DEFAULT_LOCALE}",
+  "mockApi": ${APP_MOCK_API}
+}

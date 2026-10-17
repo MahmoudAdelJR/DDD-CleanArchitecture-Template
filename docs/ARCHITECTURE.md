@@ -180,8 +180,11 @@ Step-by-step: `docs/recipes/backend-cutover.md`.
 
 Runtime configuration (`core/config/app-config.ts`, token `APP_CONFIG`) is
 validated at startup: `apiBaseUrl`, `trustedOrigins` (bare origins only),
-`supportedLocales`, `defaultLocale`, optional `mockApi`. Override per
-deployment in `app.config.ts`.
+`supportedLocales`, `defaultLocale`, optional `mockApi`. Before Angular
+bootstraps, `core/config/runtime-app-config.ts` fetches
+`config/app-config.json`, rejects unknown or invalid values, and merges valid
+partial values over `DEFAULT_APP_CONFIG`. This lets one compiled artifact move
+through environments; see `docs/recipes/runtime-config.md`.
 
 ## Client-side authorization disclaimer
 

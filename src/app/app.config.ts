@@ -13,7 +13,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { languageInterceptor } from './core/interceptors/language.interceptor';
-import { DEFAULT_APP_CONFIG, provideAppConfig } from './core/config/app-config';
+import { AppConfig, provideAppConfig } from './core/config/app-config';
 import { STORAGE } from './core/storage/storage.port';
 import { BrowserStorageAdapter } from './core/storage/browser-storage.adapter';
 import { AuthSessionService } from './core/services/auth-session.service';
@@ -42,51 +42,52 @@ import { ErrorHandler } from '@angular/core';
  * The dev mock interceptor answers trusted requests when AppConfig.mockApi
  * is true and otherwise passes everything through to the real backend.
  */
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(routes),
+export function createAppConfig(runtimeConfig: AppConfig): ApplicationConfig {
+  return {
+    providers: [
+      provideBrowserGlobalErrorListeners(),
+      provideZonelessChangeDetection(),
+      provideRouter(routes),
 
-    // Runtime configuration. Override per deployment (e.g. from /config.json).
-    provideAppConfig(DEFAULT_APP_CONFIG),
+      provideAppConfig(runtimeConfig),
 
-    { provide: STORAGE, useClass: BrowserStorageAdapter },
+      { provide: STORAGE, useClass: BrowserStorageAdapter },
 
-    // Platform i18n: LocaleService adapts the shared TranslationPort,
-    // LOCALE_ID follows the persisted preference at bootstrap.
-    ...provideCoreI18n(),
+      // Platform i18n: LocaleService adapts the shared TranslationPort,
+      // LOCALE_ID follows the persisted preference at bootstrap.
+      ...provideCoreI18n(),
 
-    // Platform-side auth adapters (swap with real HTTP/identity providers).
-    ...provideAuthDataAccess(),
+      // Platform-side auth adapters (swap with real HTTP/identity providers).
+      ...provideAuthDataAccess(),
 
-    // Observability: redacted structured logs, replaceable telemetry sink,
-    // and a per-session correlation id propagated to trusted API requests.
-    { provide: LOGGER, useClass: StructuredConsoleLogger },
-    { provide: TELEMETRY, useClass: NoopTelemetryAdapter },
-    { provide: CORRELATION_ID, useFactory: generateCorrelationId },
-    { provide: ErrorHandler, useClass: AppErrorHandler },
+      // Observability: redacted structured logs, replaceable telemetry sink,
+      // and a per-session correlation id propagated to trusted API requests.
+      { provide: LOGGER, useClass: StructuredConsoleLogger },
+      { provide: TELEMETRY, useClass: NoopTelemetryAdapter },
+      { provide: CORRELATION_ID, useFactory: generateCorrelationId },
+      { provide: ErrorHandler, useClass: AppErrorHandler },
 
-    provideAppInitializer(() => {
-      // Construct now so document lang/dir sync and translation lookups are
-      // ready before the first component renders.
-      inject(LocaleService);
-    }),
+      provideAppInitializer(() => {
+        // Construct now so document lang/dir sync and translation lookups are
+        // ready before the first component renders.
+        inject(LocaleService);
+      }),
 
-    provideAppInitializer(async () => {
-      await inject(AuthSessionService).restoreSession();
-    }),
+      provideAppInitializer(async () => {
+        await inject(AuthSessionService).restoreSession();
+      }),
 
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([
-        loadingInterceptor,
-        errorInterceptor,
-        languageInterceptor,
-        correlationInterceptor,
-        authInterceptor,
-        mockApiInterceptor,
-      ]),
-    ),
-  ],
-};
+      provideHttpClient(
+        withFetch(),
+        withInterceptors([
+          loadingInterceptor,
+          errorInterceptor,
+          languageInterceptor,
+          correlationInterceptor,
+          authInterceptor,
+          mockApiInterceptor,
+        ]),
+      ),
+    ],
+  };
+}

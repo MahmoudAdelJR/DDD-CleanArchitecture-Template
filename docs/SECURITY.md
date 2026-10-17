@@ -24,6 +24,10 @@ must never be the only thing deciding anything sensitive.
 - Production build path: `deploy/` ships CSP (incl. `frame-ancestors 'none'`),
   nosniff, referrer/permissions policy, no-cache HTML, immutable hashed
   assets; enable HSTS once TLS exists.
+- Runtime config is schema-validated before bootstrap, fetched without caching,
+  and fails closed except for an intentional `404` defaults fallback. It is
+  public browser data: never place credentials or secrets in it, and treat
+  `trustedOrigins` changes as security-sensitive deployment policy.
 - CI dependency gates: production `npm audit` must report zero high; dev
   exceptions require reason + expiry in `audit-allowlist.json`.
 - CSP note: component styles require `style-src 'unsafe-inline'` unless the

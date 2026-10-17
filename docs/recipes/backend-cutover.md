@@ -4,20 +4,16 @@ No page or store code changes — this is entirely composition-root work.
 
 ## 1. Point the runtime config at your API
 
-`app.config.ts` → replace `provideAppConfig(DEFAULT_APP_CONFIG)`:
+Set `public/config/app-config.json` for local/static hosting, or the equivalent
+deployment values described in `docs/recipes/runtime-config.md`:
 
-```ts
-provideAppConfig({
-  apiBaseUrl: 'https://api.example.com',
-  trustedOrigins: ['https://api.example.com'], // bare origins, validated
-  supportedLocales: ['en', 'fr'],
-  defaultLocale: 'en',
-  mockApi: false, // true = dev fixtures
-});
+```json
+{
+  "apiBaseUrl": "https://api.example.com",
+  "trustedOrigins": ["https://api.example.com"],
+  "mockApi": false
+}
 ```
-
-Better: load this from `/config.json` in a `provideAppInitializer` so one
-artifact promotes across environments (validation still runs at startup).
 
 ## 2. Real identity endpoints
 

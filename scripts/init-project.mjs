@@ -10,8 +10,8 @@
  *                           CI + Docker artifact paths)
  *   --storage-prefix <p>    defaults to --package (namespaces session/language keys)
  *   --version <x.y.z>       consumer app version, default 0.1.0
- *   --api-base-url <url>    optional DEFAULT_APP_CONFIG override
- *   --default-locale <en|fr> optional default locale (syncs index.html lang)
+ *   --api-base-url <url>    optional runtime app-config.json override
+ *   --default-locale <en|fr> optional runtime locale (syncs index.html lang)
  *   --dry-run               print the exact change manifest, write nothing
  *   --force                 re-run over an already-initialized project
  *
@@ -201,6 +201,21 @@ function buildManifest(root, plan) {
     return changed;
   });
 
+  if (plan.apiBaseUrl !== undefined || plan.defaultLocale !== undefined) {
+    jsonEdit('public/config/app-config.json', (data) => {
+      let changed = false;
+      if (plan.apiBaseUrl !== undefined && data.apiBaseUrl !== plan.apiBaseUrl) {
+        data.apiBaseUrl = plan.apiBaseUrl;
+        changed = true;
+      }
+      if (plan.defaultLocale !== undefined && data.defaultLocale !== plan.defaultLocale) {
+        data.defaultLocale = plan.defaultLocale;
+        changed = true;
+      }
+      return changed;
+    });
+  }
+
   literal('angular.json', [[OLD_PROJECT, plan.angularProject]]);
   literal('deploy/Dockerfile', [[OLD_PROJECT, plan.angularProject]]);
   literal('.github/workflows/ci.yml', [[OLD_PROJECT, plan.angularProject]]);
@@ -226,15 +241,7 @@ function buildManifest(root, plan) {
   ]);
   literal('deploy/README.md', [['ddd-template-web:local', `${plan.pkg}-web:local`]]);
 
-  if (plan.apiBaseUrl !== undefined) {
-    literal('src/app/core/config/app-config.ts', [
-      [`apiBaseUrl: '/api'`, `apiBaseUrl: '${plan.apiBaseUrl}'`],
-    ]);
-  }
   if (plan.defaultLocale !== undefined) {
-    literal('src/app/core/config/app-config.ts', [
-      [`defaultLocale: 'en'`, `defaultLocale: '${plan.defaultLocale}'`],
-    ]);
     literal('src/index.html', [[`<html lang="en">`, `<html lang="${plan.defaultLocale}">`]]);
   }
 
@@ -304,6 +311,8 @@ export async function runInitializer({
           angularProject: plan.angularProject,
           storagePrefix: plan.storagePrefix,
           version: plan.version,
+          apiBaseUrl: plan.apiBaseUrl,
+          defaultLocale: plan.defaultLocale,
           initializedFromTemplateAt: new Date().toISOString(),
         },
         null,
