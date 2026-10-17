@@ -13,6 +13,11 @@
   </section>
 } @else if (customer(); as selectedCustomer) {
   <app-page-header [title]="selectedCustomer.company">
+    <ng-container *appHasPermission="customersWritePermission">
+      <a class="button" [routerLink]="['/customers', selectedCustomer.id, 'edit']">
+        {{ 'customers.edit' | tr }}
+      </a>
+    </ng-container>
     <a routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
   </app-page-header>
 

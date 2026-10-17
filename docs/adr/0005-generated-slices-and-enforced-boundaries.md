@@ -12,11 +12,17 @@ must be easier to produce than an incorrect one.
 
 ## Decision
 
-`npm run gen:feature -- <name> [--workflow]` and `npm run gen:page -- <feature> <name>`
+`npm run gen:feature -- <name> [--read-only] [--workflow]` and
+`npm run gen:page -- <feature> <name>`
 scaffold slices that are, by construction, conventions-compliant: folder
 layout, port/token/in-memory adapter, route-scoped providers, list+detail
 pages with a11y primitives, specs, the lazy route entry in `app.routes.ts`,
-and the cross-feature zone in `eslint.config.mjs`. Insertion points are
+and the cross-feature zone in `eslint.config.mjs`. Feature mode defaults to a
+full create/read/update slice (a form page, the write methods on the port, an
+HTTP adapter, and the slice's production `fileReplacements` entry in
+`angular.json`); `--read-only` produces a list+detail slice without writes.
+Generated templates are localized through the `tr` pipe with inline fallbacks.
+Insertion points are
 marker comments; page routes are patched through the TypeScript parser (so
 one-line `Routes` arrays and static-before-`:id` ordering are handled
 correctly). `scripts/check-architecture.mjs` (CI step + post-generate

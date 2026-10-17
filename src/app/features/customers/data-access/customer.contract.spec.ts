@@ -1,4 +1,7 @@
-import { InMemoryCustomerRepository } from './in-memory-customer.repository';
+import {
+  InMemoryCustomerRepository,
+  resetInMemoryCustomers,
+} from './in-memory-customer.repository';
 
 /**
  * Transport contract for GET /api/customers and GET /api/customers/{id}.
@@ -18,6 +21,8 @@ const CUSTOMER_SUMMARY_KEYS = [
 
 describe('customers API transport contract', () => {
   const repository = new InMemoryCustomerRepository();
+
+  beforeEach(() => resetInMemoryCustomers());
 
   it('GET /customers returns PagedList<CustomerSummary> with exact transport keys', async () => {
     const page = await repository.search({ search: '', page: 1, pageSize: 5 });
@@ -91,5 +96,35 @@ describe('customers API transport contract', () => {
       expect(Object.keys(detail)).toContain(key);
     }
     expect(detail).toEqual(jasmine.objectContaining({ notes: jasmine.any(String) }));
+  });
+
+  const NEW_CUSTOMER = {
+    company: 'Initech North',
+    contactName: 'Milton Waddams',
+    email: 'milton@initech.example',
+    city: 'Austin',
+    status: 'active' as const,
+    notes: 'Keeps the red stapler.',
+  };
+
+  it('POST /customers returns a detail with a server-assigned id and calendar date', async () => {
+    const created = await repository.create(NEW_CUSTOMER);
+
+    expect(Object.keys(created).sort()).toEqual([...CUSTOMER_SUMMARY_KEYS, 'notes'].sort());
+    expect(created.id).toBeTruthy();
+    expect(created.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(created).toEqual(jasmine.objectContaining(NEW_CUSTOMER));
+  });
+
+  it('PUT /customers/{id} returns the updated detail preserving id and createdAt', async () => {
+    const created = await repository.create(NEW_CUSTOMER);
+    const updated = await repository.update(created.id, {
+      ...NEW_CUSTOMER,
+      company: 'Initech Renamed',
+    });
+
+    expect(updated.id).toBe(created.id);
+    expect(updated.createdAt).toBe(created.createdAt);
+    expect(updated.company).toBe('Initech Renamed');
   });
 });

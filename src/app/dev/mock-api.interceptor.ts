@@ -4,17 +4,22 @@ import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/com
 import { inject } from '@angular/core';
 import { delay, of, throwError } from 'rxjs';
 import { APP_CONFIG, isTrustedApiUrl } from '../core/config/app-config';
-import { mockCustomerDetail, mockCustomerSearch } from './mock-fixtures';
-
-interface MockReply {
-  status: number;
-  body: unknown;
-}
+import {
+  mockCustomerCreate,
+  mockCustomerDetail,
+  mockCustomerSearch,
+  mockCustomerUpdate,
+  type MockApiResult,
+} from './mock-fixtures';
 
 interface MockRoute {
   method: string;
   path: RegExp;
-  resolve: (context: { params: URLSearchParams; match: RegExpExecArray }) => MockReply;
+  resolve: (context: {
+    params: URLSearchParams;
+    match: RegExpExecArray;
+    body: unknown;
+  }) => MockApiResult;
 }
 
 /**
@@ -45,6 +50,16 @@ const MOCK_ROUTES: MockRoute[] = [
             },
           };
     },
+  },
+  {
+    method: 'POST',
+    path: /^\/api\/customers$/,
+    resolve: ({ body }) => mockCustomerCreate(body),
+  },
+  {
+    method: 'PUT',
+    path: /^\/api\/customers\/([\w-]+)$/,
+    resolve: ({ match, body }) => mockCustomerUpdate(match[1], body),
   },
 ];
 
@@ -78,7 +93,7 @@ export const mockApiInterceptor: HttpInterceptorFn = (request, next) => {
   }
 
   const match = route.path.exec(url.pathname) as RegExpExecArray;
-  const reply = route.resolve({ params: url.searchParams, match });
+  const reply = route.resolve({ params: url.searchParams, match, body: request.body });
 
   if (reply.status >= 400) {
     // Errors must flow as HttpErrorResponse so the error interceptor and

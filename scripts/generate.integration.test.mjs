@@ -35,11 +35,34 @@ const ESLINT_TEMPLATE = `export default [
 ];
 `;
 
+const ANGULAR_TEMPLATE = `{
+  "projects": {
+    "app": {
+      "architect": {
+        "build": {
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/backend-interceptors.ts",
+                  "with": "src/app/backend-interceptors.production.ts"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
 const cleanupRoots = [];
 
 function fixtureWorkspace({
   routes = APP_ROUTES_TEMPLATE,
   eslint = ESLINT_TEMPLATE,
+  angular = ANGULAR_TEMPLATE,
   extraFiles = {},
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gen test '));
@@ -47,6 +70,7 @@ function fixtureWorkspace({
   mkdirSync(join(root, 'src', 'app'), { recursive: true });
   writeFileSync(join(root, 'src', 'app', 'app.routes.ts'), routes, 'utf8');
   writeFileSync(join(root, 'eslint.config.mjs'), eslint, 'utf8');
+  writeFileSync(join(root, 'angular.json'), angular, 'utf8');
   for (const [rel, content] of Object.entries(extraFiles)) {
     const target = join(root, rel);
     mkdirSync(join(target, '..'), { recursive: true });
@@ -133,6 +157,58 @@ describe('gen:feature (success paths)', () => {
     assert.ok(prettierArgs.includes('src/app/features/orders/orders.routes.ts'));
     assert.ok(prettierArgs.includes('src/app/app.routes.ts'));
     assert.ok(prettierArgs.includes('eslint.config.mjs'));
+    assert.ok(prettierArgs.includes('angular.json'));
+  });
+
+  test('crud is the default: form, HTTP adapter, providers, and angular wiring included', () => {
+    const root = fixtureWorkspace();
+    quietGenerator(root, fakeRunner(), ['feature', 'orders']);
+
+    assert.ok(existsSync(join(root, 'src/app/features/orders/order-form.store.ts')));
+    assert.ok(
+      existsSync(join(root, 'src/app/features/orders/order-form/order-form-page.component.html')),
+    );
+    assert.ok(
+      existsSync(join(root, 'src/app/features/orders/data-access/order-http.repository.ts')),
+    );
+    assert.ok(
+      existsSync(join(root, 'src/app/features/orders/data-access/orders-data-access.providers.ts')),
+    );
+    assert.ok(
+      existsSync(
+        join(
+          root,
+          'src/app/features/orders/data-access/orders-data-access.providers.production.ts',
+        ),
+      ),
+    );
+
+    const angular = JSON.parse(readFileSync(join(root, 'angular.json'), 'utf8'));
+    const replacements =
+      angular.projects.app.architect.build.configurations.production.fileReplacements;
+    assert.ok(
+      replacements.some(
+        (entry) =>
+          entry.replace === 'src/app/features/orders/data-access/orders-data-access.providers.ts' &&
+          entry.with ===
+            'src/app/features/orders/data-access/orders-data-access.providers.production.ts',
+      ),
+    );
+
+    const routes = readFileSync(join(root, 'src/app/features/orders/orders.routes.ts'), 'utf8');
+    assert.deepEqual(routesArrayPaths(routes), ['', 'new', ':id/edit', ':id']);
+  });
+
+  test('--read-only omits the form and write routes', () => {
+    const root = fixtureWorkspace();
+    quietGenerator(root, fakeRunner(), ['feature', 'reports', '--read-only']);
+
+    assert.ok(existsSync(join(root, 'src/app/features/reports/reports.routes.ts')));
+    assert.ok(!existsSync(join(root, 'src/app/features/reports/report-form.store.ts')));
+    assert.ok(!existsSync(join(root, 'src/app/features/reports/report-form')));
+
+    const routes = readFileSync(join(root, 'src/app/features/reports/reports.routes.ts'), 'utf8');
+    assert.deepEqual(routesArrayPaths(routes), ['', ':id']);
   });
 
   test('--workflow adds the domain module and its spec', () => {
@@ -204,49 +280,78 @@ describe('gen:feature (preflight rejections: nothing is written)', () => {
     );
     assert.equal(readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8'), before);
   });
+
+  test('missing angular.json aborts before creating anything', () => {
+    const root = mkdtempSync(join(tmpdir(), 'gen test '));
+    cleanupRoots.push(root);
+    mkdirSync(join(root, 'src', 'app'), { recursive: true });
+    writeFileSync(join(root, 'src', 'app', 'app.routes.ts'), APP_ROUTES_TEMPLATE, 'utf8');
+    writeFileSync(join(root, 'eslint.config.mjs'), ESLINT_TEMPLATE, 'utf8');
+
+    assert.throws(
+      () => quietGenerator(root, fakeRunner(), ['feature', 'orders']),
+      /angular\.json is missing/u,
+    );
+    assert.ok(!existsSync(join(root, 'src/app/features/orders')));
+  });
+
+  test('--read-only and --crud are mutually exclusive', () => {
+    const root = fixtureWorkspace();
+    assert.throws(
+      () => quietGenerator(root, fakeRunner(), ['feature', 'orders', '--read-only', '--crud']),
+      /mutually exclusive/u,
+    );
+    assert.ok(!existsSync(join(root, 'src/app/features/orders')));
+  });
 });
 
 describe('gen:feature (automatic rollback)', () => {
-  function assertPristine(root, routesBefore, eslintBefore) {
+  function assertPristine(root, routesBefore, eslintBefore, angularBefore) {
     assert.ok(!existsSync(join(root, 'src/app/features/orders')));
     assert.equal(readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8'), routesBefore);
     assert.equal(readFileSync(join(root, 'eslint.config.mjs'), 'utf8'), eslintBefore);
+    assert.equal(readFileSync(join(root, 'angular.json'), 'utf8'), angularBefore);
+  }
+
+  function beforeState(root) {
+    return [
+      readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8'),
+      readFileSync(join(root, 'eslint.config.mjs'), 'utf8'),
+      readFileSync(join(root, 'angular.json'), 'utf8'),
+    ];
   }
 
   test('lint failure during verification restores the exact prior state', () => {
     const root = fixtureWorkspace();
-    const routesBefore = readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8');
-    const eslintBefore = readFileSync(join(root, 'eslint.config.mjs'), 'utf8');
+    const [routesBefore, eslintBefore, angularBefore] = beforeState(root);
 
     assert.throws(
       () => quietGenerator(root, fakeRunner('eslint.js'), ['feature', 'orders']),
       /Verification step FAILED/u,
     );
-    assertPristine(root, routesBefore, eslintBefore);
+    assertPristine(root, routesBefore, eslintBefore, angularBefore);
   });
 
   test('prettier failure restores the exact prior state', () => {
     const root = fixtureWorkspace();
-    const routesBefore = readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8');
-    const eslintBefore = readFileSync(join(root, 'eslint.config.mjs'), 'utf8');
+    const [routesBefore, eslintBefore, angularBefore] = beforeState(root);
 
     assert.throws(
       () => quietGenerator(root, fakeRunner('prettier.cjs'), ['feature', 'orders']),
       /FAILED/u,
     );
-    assertPristine(root, routesBefore, eslintBefore);
+    assertPristine(root, routesBefore, eslintBefore, angularBefore);
   });
 
   test('unit-test failure restores the exact prior state', () => {
     const root = fixtureWorkspace();
-    const routesBefore = readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8');
-    const eslintBefore = readFileSync(join(root, 'eslint.config.mjs'), 'utf8');
+    const [routesBefore, eslintBefore, angularBefore] = beforeState(root);
 
     assert.throws(
       () => quietGenerator(root, fakeRunner('ng.js'), ['feature', 'orders']),
       /FAILED/u,
     );
-    assertPristine(root, routesBefore, eslintBefore);
+    assertPristine(root, routesBefore, eslintBefore, angularBefore);
   });
 
   test('rollback message distinguishes clean rollback from incomplete rollback', () => {

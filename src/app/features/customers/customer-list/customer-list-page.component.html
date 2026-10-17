@@ -1,4 +1,8 @@
-<app-page-header [title]="'customers.title' | tr" />
+<app-page-header [title]="'customers.title' | tr">
+  <ng-container *appHasPermission="customersWritePermission">
+    <a class="button" routerLink="/customers/new">{{ 'customers.new' | tr }}</a>
+  </ng-container>
+</app-page-header>
 
 @if (store.state(); as state) {
   <form class="search-bar" (ngSubmit)="searchCustomers()">

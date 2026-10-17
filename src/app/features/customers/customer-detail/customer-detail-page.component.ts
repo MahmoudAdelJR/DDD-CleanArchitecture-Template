@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AppPermissions } from '../../../core/authorization/app-permissions';
+import { HasPermissionDirective } from '../../../core/authorization/has-permission.directive';
 import { AppDatePipe } from '../../../shared/dates/app-date.pipe';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
@@ -10,7 +12,7 @@ type DetailStatus = 'loading' | 'ready' | 'not-found' | 'error';
 
 @Component({
   selector: 'app-customer-detail-page',
-  imports: [RouterLink, AppDatePipe, TranslatePipe, PageHeaderComponent],
+  imports: [RouterLink, HasPermissionDirective, AppDatePipe, TranslatePipe, PageHeaderComponent],
   templateUrl: './customer-detail-page.component.html',
   styleUrl: './customer-detail-page.component.scss',
 })
@@ -20,6 +22,7 @@ export class CustomerDetailPageComponent {
 
   protected readonly status = signal<DetailStatus>('loading');
   protected readonly customer = signal<CustomerDetails | null>(null);
+  protected readonly customersWritePermission = AppPermissions.customersWrite;
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');

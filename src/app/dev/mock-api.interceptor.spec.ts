@@ -4,6 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AppConfig, provideAppConfig } from '../core/config/app-config';
+import { resetMockCustomers } from './mock-fixtures';
 import { mockApiInterceptor } from './mock-api.interceptor';
 
 const MOCK_CONFIG: AppConfig = {
@@ -21,6 +22,8 @@ async function settle(): Promise<void> {
 }
 
 describe('mockApiInterceptor', () => {
+  beforeEach(() => resetMockCustomers());
+
   function setup(config: AppConfig): { http: HttpClient; controller: HttpTestingController } {
     TestBed.configureTestingModule({
       providers: [
@@ -100,5 +103,70 @@ describe('mockApiInterceptor', () => {
     request.flush([]);
 
     expect(body).toEqual([]);
+  });
+
+  const INPUT = {
+    company: 'Wonka Industries',
+    contactName: 'Willy Wonka',
+    email: 'willy@wonka.example',
+    city: 'Chicago',
+    status: 'active',
+    notes: 'Golden tickets.',
+  };
+
+  it('creates a customer and returns it from a subsequent list request', async () => {
+    const { http } = setup(MOCK_CONFIG);
+
+    const created = await http.post<any>('/api/customers', INPUT).toPromise();
+    expect(created.id).toBeTruthy();
+    expect(created.company).toBe('Wonka Industries');
+
+    const list = await http.get<any>('/api/customers?search=wonka&page=1&pageSize=5').toPromise();
+    expect(list.totalCount).toBe(1);
+    expect(list.items[0].id).toBe(created.id);
+  });
+
+  it('returns a 422 Problem Details body for invalid input', async () => {
+    const { http } = setup(MOCK_CONFIG);
+
+    let captured: unknown = null;
+    await http
+      .post('/api/customers', { ...INPUT, email: 'not-an-email' })
+      .toPromise()
+      .catch((error) => (captured = error));
+
+    expect(captured).toBeInstanceOf(HttpErrorResponse);
+    const response = captured as HttpErrorResponse;
+    expect(response.status).toBe(422);
+    expect(response.error.errors.email).toBeDefined();
+  });
+
+  it('returns 409 when the email already exists', async () => {
+    const { http } = setup(MOCK_CONFIG);
+
+    let captured: unknown = null;
+    await http
+      .post('/api/customers', { ...INPUT, email: 'wile@acme.example' })
+      .toPromise()
+      .catch((error) => (captured = error));
+
+    expect((captured as HttpErrorResponse).status).toBe(409);
+  });
+
+  it('updates an existing customer and 404s for unknown ids', async () => {
+    const { http } = setup(MOCK_CONFIG);
+
+    const updated = await http
+      .put<any>('/api/customers/c1', { ...INPUT, company: 'Acme Global' })
+      .toPromise();
+    expect(updated.company).toBe('Acme Global');
+    expect(updated.id).toBe('c1');
+
+    let captured: unknown = null;
+    await http
+      .put('/api/customers/ghost', INPUT)
+      .toPromise()
+      .catch((error) => (captured = error));
+    expect((captured as HttpErrorResponse).status).toBe(404);
   });
 });

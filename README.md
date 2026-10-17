@@ -61,30 +61,31 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
    zone, and re-runs the gates for you:
 
    ```bash
-   npm run gen:feature -- orders             # CRUD slice
+   npm run gen:feature -- orders             # CRUD slice (list + detail + form)
+   npm run gen:feature -- reports --read-only  # list + detail only
    npm run gen:feature -- invoices --workflow  # + domain invariants
    npm run gen:page -- orders approve
    ```
 
 ## Commands
 
-| Task                                                | Command                                               |
-| --------------------------------------------------- | ----------------------------------------------------- |
-| Dev server                                          | `npm start`                                           |
-| Production build (bundle budgets enforced)          | `npm run build`                                       |
-| Unit tests (interactive)                            | `npm test`                                            |
-| Unit tests + coverage (CI mode)                     | `npm run test:ci`                                     |
-| Lint incl. architecture boundaries                  | `npm run lint`                                        |
-| Formatting                                          | `npm run format` / `npm run format:check`             |
-| Typecheck app, specs, and e2e                       | `npm run typecheck`                                   |
-| E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                         |
-| Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--workflow]`          |
-| Add a page to an existing slice                     | `npm run gen:page -- orders approve`                  |
-| Slice wiring integrity check                        | `npm run check:architecture`                          |
-| Initialize project identity (one-time, safe)        | `npm run init:project -- --name "My App" [--dry-run]` |
-| Generator integration tests (isolated fixtures)     | `npm run test:generator`                              |
-| Initializer integration tests                       | `npm run test:init`                                   |
-| Dependency audit gates                              | `npm run audit:ci` + `npm run audit:gate`             |
+| Task                                                | Command                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| Dev server                                          | `npm start`                                                |
+| Production build (bundle budgets enforced)          | `npm run build`                                            |
+| Unit tests (interactive)                            | `npm test`                                                 |
+| Unit tests + coverage (CI mode)                     | `npm run test:ci`                                          |
+| Lint incl. architecture boundaries                  | `npm run lint`                                             |
+| Formatting                                          | `npm run format` / `npm run format:check`                  |
+| Typecheck app, specs, and e2e                       | `npm run typecheck`                                        |
+| E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                              |
+| Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--read-only] [--workflow]` |
+| Add a page to an existing slice                     | `npm run gen:page -- orders approve`                       |
+| Slice wiring integrity check                        | `npm run check:architecture`                               |
+| Initialize project identity (one-time, safe)        | `npm run init:project -- --name "My App" [--dry-run]`      |
+| Generator integration tests (isolated fixtures)     | `npm run test:generator`                                   |
+| Initializer integration tests                       | `npm run test:init`                                        |
+| Dependency audit gates                              | `npm run audit:ci` + `npm run audit:gate`                  |
 
 ## Documentation
 

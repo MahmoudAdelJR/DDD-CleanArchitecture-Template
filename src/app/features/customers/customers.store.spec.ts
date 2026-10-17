@@ -1,11 +1,17 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { PagedList } from '../../shared/models/paged-list.model';
 import { CustomersStore } from './customers.store';
-import { CUSTOMER_REPOSITORY } from './data-access/customer.repository';
-import { InMemoryCustomerRepository } from './data-access/in-memory-customer.repository';
+import type { CustomerSummary } from './data-access/customer.models';
+import { CUSTOMER_REPOSITORY, CustomerRepository } from './data-access/customer.repository';
+import {
+  InMemoryCustomerRepository,
+  resetInMemoryCustomers,
+} from './data-access/in-memory-customer.repository';
 
 describe('CustomersStore', () => {
   beforeEach(() => {
+    resetInMemoryCustomers();
     TestBed.configureTestingModule({
       providers: [
         CustomersStore,
@@ -56,5 +62,67 @@ describe('CustomersStore', () => {
     while (store.state().status === 'loading') {
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
+  }
+});
+
+describe('CustomersStore (latest-request-wins)', () => {
+  it('ignores a stale response that resolves after a newer search', async () => {
+    const pending: Array<(value: PagedList<CustomerSummary>) => void> = [];
+    const fake: CustomerRepository = {
+      search: () => new Promise((resolve) => pending.push(resolve)),
+      findById: () => Promise.reject(new Error('unused')),
+      create: () => Promise.reject(new Error('unused')),
+      update: () => Promise.reject(new Error('unused')),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        CustomersStore,
+        { provide: CUSTOMER_REPOSITORY, useValue: fake },
+        provideZonelessChangeDetection(),
+      ],
+    });
+
+    const store = TestBed.inject(CustomersStore);
+
+    store.searchFor('first');
+    store.searchFor('second');
+    expect(pending.length).toBe(2);
+
+    // The newest request resolves first, then the stale one lands afterwards.
+    pending[1](pageFor('second'));
+    await tick();
+    pending[0](pageFor('first'));
+    await tick();
+
+    expect(store.state().search).toBe('second');
+    expect(store.state().result?.items[0].company).toBe('second');
+    expect(store.state().status).toBe('ready');
+  });
+
+  function pageFor(label: string): PagedList<CustomerSummary> {
+    return {
+      items: [
+        {
+          id: '1',
+          company: label,
+          contactName: 'Contact',
+          email: 'c@example.com',
+          city: 'City',
+          status: 'active',
+          createdAt: '2024-01-01',
+        },
+      ],
+      pageNumber: 1,
+      pageSize: 5,
+      totalCount: 1,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    };
+  }
+
+  async function tick(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 0));
   }
 });

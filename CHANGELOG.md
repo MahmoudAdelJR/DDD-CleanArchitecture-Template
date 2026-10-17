@@ -6,6 +6,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-17
+
+### Added
+
+- Customer create/edit write workflow: `CustomerFormStore` and
+  `CustomerFormPageComponent` reachable at `/customers/new` and
+  `/customers/:id/edit`, with a gated "New customer"/"Edit" affordance in the
+  list and detail pages.
+- `unsavedChangesGuard` + the `PendingChanges` contract, so navigating away
+  from a dirty form prompts for confirmation.
+- `CustomerInput` command model; `create`/`update` on `CustomerRepository`,
+  implemented by the in-memory fake (with `resetInMemoryCustomers()` for tests)
+  and the new `CustomerHttpRepository`.
+- Dev mock API now answers `POST`/`PUT /api/customers` with validation (422),
+  conflict (409), and not-found (404) problem responses
+  (`resetMockCustomers()` resets the store).
+- `gen:feature` now generates a full create/read/update slice by default
+  (list + detail + form, in-memory fake wired through a data-access provider
+  file, an HTTP adapter, and its production provider), and patches an
+  `angular.json` production `fileReplacements` entry so the fake is excluded
+  from release builds. New `--read-only` flag generates a list + detail slice
+  without writes; `--crud` is the explicit default.
+- Generated templates are localized through the `tr` pipe with inline
+  fallbacks, so a new slice is translatable without editing the catalog first.
+- `locale-catalog.spec.ts` enforces EN/FR key parity and non-empty strings.
+
+### Changed
+
+- `BaseHttpService` `get`/`post`/`put`/`patch`/`delete` accept an optional
+  `HttpContext`, letting write calls set `SUPPRESS_GLOBAL_ERROR` and own their
+  error surface.
+- `CustomersStore` exposes readonly state and only commits the most recent
+  search response (latest-request-wins).
+
 ## [1.5.0] - 2026-10-17
 
 ### Added

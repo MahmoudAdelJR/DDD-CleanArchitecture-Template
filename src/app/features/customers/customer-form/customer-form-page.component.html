@@ -1,0 +1,143 @@
+@if (status() === 'loading') {
+  <p role="status" aria-live="polite" class="muted">{{ 'customers.loadingDetail' | tr }}</p>
+} @else if (notFound()) {
+  <section class="card">
+    <h1>{{ 'customers.notFoundTitle' | tr }}</h1>
+    <p class="muted">{{ 'customers.notFoundBody' | tr }}</p>
+    <a class="button" routerLink="/customers">{{ 'common.backToCustomers' | tr }}</a>
+  </section>
+} @else if (loadError(); as message) {
+  <section class="card">
+    <div class="error-banner" role="alert">{{ message }}</div>
+    <button type="button" class="button button--secondary" (click)="retryLoad()">
+      {{ 'common.retry' | tr }}
+    </button>
+  </section>
+} @else {
+  <app-page-header
+    [title]="
+      (isEdit() ? 'customers.editTitle' : 'customers.newTitle')
+        | tr: { company: form.controls.company.value }
+    "
+  >
+    <a class="button button--secondary" routerLink="/customers">{{ 'customers.cancel' | tr }}</a>
+  </app-page-header>
+
+  @if (saveError(); as message) {
+    <div class="error-banner" role="alert">{{ message }}</div>
+  }
+
+  <form class="card customer-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="field">
+      <label for="company">{{ 'customers.formCompany' | tr }}</label>
+      <input
+        id="company"
+        formControlName="company"
+        type="text"
+        autocomplete="organization"
+        [attr.aria-invalid]="isInvalid('company')"
+        aria-describedby="company-errors"
+        [appAutofocus]="true"
+      />
+      <app-field-error
+        id="company-errors"
+        [control]="form.controls.company"
+        [show]="shouldShowFieldError('company')"
+        [label]="'customers.formCompany' | tr"
+      />
+    </div>
+
+    <div class="field">
+      <label for="contactName">{{ 'customers.formContact' | tr }}</label>
+      <input
+        id="contactName"
+        formControlName="contactName"
+        type="text"
+        autocomplete="name"
+        [attr.aria-invalid]="isInvalid('contactName')"
+        aria-describedby="contactName-errors"
+      />
+      <app-field-error
+        id="contactName-errors"
+        [control]="form.controls.contactName"
+        [show]="shouldShowFieldError('contactName')"
+        [label]="'customers.formContact' | tr"
+      />
+    </div>
+
+    <div class="field">
+      <label for="email">{{ 'customers.formEmail' | tr }}</label>
+      <input
+        id="email"
+        formControlName="email"
+        type="email"
+        autocomplete="email"
+        [attr.aria-invalid]="isInvalid('email')"
+        aria-describedby="email-errors"
+      />
+      <app-field-error
+        id="email-errors"
+        [control]="form.controls.email"
+        [show]="shouldShowFieldError('email')"
+        [label]="'customers.formEmail' | tr"
+      />
+    </div>
+
+    <div class="field">
+      <label for="city">{{ 'customers.formCity' | tr }}</label>
+      <input
+        id="city"
+        formControlName="city"
+        type="text"
+        autocomplete="address-level2"
+        [attr.aria-invalid]="isInvalid('city')"
+        aria-describedby="city-errors"
+      />
+      <app-field-error
+        id="city-errors"
+        [control]="form.controls.city"
+        [show]="shouldShowFieldError('city')"
+        [label]="'customers.formCity' | tr"
+      />
+    </div>
+
+    <div class="field">
+      <label for="status">{{ 'customers.formStatus' | tr }}</label>
+      <select id="status" formControlName="status" aria-describedby="status-errors">
+        @for (option of statuses; track option) {
+          <option [value]="option">{{ 'customers.status.' + option | tr }}</option>
+        }
+      </select>
+      <app-field-error
+        id="status-errors"
+        [control]="form.controls.status"
+        [show]="shouldShowFieldError('status')"
+        [label]="'customers.formStatus' | tr"
+      />
+    </div>
+
+    <div class="field">
+      <label for="notes">{{ 'customers.formNotes' | tr }}</label>
+      <textarea
+        id="notes"
+        formControlName="notes"
+        rows="4"
+        [attr.aria-invalid]="isInvalid('notes')"
+        aria-describedby="notes-errors"
+      ></textarea>
+      <app-field-error
+        id="notes-errors"
+        [control]="form.controls.notes"
+        [show]="shouldShowFieldError('notes')"
+        [label]="'customers.formNotes' | tr"
+      />
+    </div>
+
+    <div class="form-actions">
+      <button class="button" type="submit" [disabled]="isSaving()">
+        {{ (isSaving() ? 'customers.saving' : 'customers.save') | tr }}
+      </button>
+      <a class="button button--secondary" routerLink="/customers">{{ 'customers.cancel' | tr }}</a>
+    </div>
+  </form>
+}

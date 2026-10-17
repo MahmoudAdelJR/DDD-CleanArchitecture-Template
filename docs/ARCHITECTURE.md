@@ -44,13 +44,15 @@ directives live under `core/authorization` because they depend on
 ## Creating slices (generators)
 
 ```bash
-npm run gen:feature -- orders                # CRUD slice (routes+store+port+fake+pages+specs)
+npm run gen:feature -- orders                # CRUD slice: list + detail + form, fake + HTTP adapter + prod providers
+npm run gen:feature -- reports --read-only   # list + detail only (no create/edit routes or form)
 npm run gen:feature -- invoices --workflow   # adds a domain/ folder with invariants + policy specs
 npm run gen:page    -- orders approve        # new page inside an existing slice
 ```
 
 The generator wires the lazy route into `app.routes.ts`, registers the
-cross-feature ESLint zone, formats everything, and re-runs the architecture
+cross-feature ESLint zone, adds the slice's production `fileReplacements` entry
+to `angular.json`, formats everything, and re-runs the architecture
 check, typecheck, lint, and unit tests before exiting. It is transactional:
 any failure — including formatting — automatically rolls the workspace back
 to its exact prior state. Page-route insertion goes through the TypeScript

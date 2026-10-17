@@ -18,7 +18,7 @@ export interface CustomerListState {
 export class CustomersStore {
   private readonly repository = inject(CUSTOMER_REPOSITORY);
 
-  readonly state = signal<CustomerListState>({
+  private readonly _state = signal<CustomerListState>({
     status: 'loading',
     search: '',
     page: 1,
@@ -26,9 +26,16 @@ export class CustomersStore {
     result: null,
     error: null,
   });
+  readonly state = this._state.asReadonly();
+
+  /**
+   * Monotonic token so overlapping searches can't commit out of order: only
+   * the response for the most recent request is applied (latest-request-wins).
+   */
+  private latestRequest = 0;
 
   load(): void {
-    const current = this.state();
+    const current = this._state();
     void this.fetch({ search: current.search, page: current.page });
   }
 
@@ -37,17 +44,24 @@ export class CustomersStore {
   }
 
   goToPage(page: number): void {
-    const current = this.state();
+    const current = this._state();
     void this.fetch({ search: current.search, page });
   }
 
   private async fetch(query: { search: string; page: number }): Promise<void> {
-    const current = this.state();
-    this.state.update((state) => ({ ...state, status: 'loading', error: null }));
+    const requestId = ++this.latestRequest;
+    const current = this._state();
+    this._state.update((state) => ({ ...state, status: 'loading', error: null }));
 
     try {
-      const result = await this.repository.search({ ...query, pageSize: current.pageSize });
-      this.state.set({
+      const result = await this.repository.search({
+        ...query,
+        pageSize: current.pageSize,
+      });
+      if (requestId !== this.latestRequest) {
+        return;
+      }
+      this._state.set({
         status: 'ready',
         search: query.search,
         page: result.pageNumber,
@@ -56,7 +70,10 @@ export class CustomersStore {
         error: null,
       });
     } catch {
-      this.state.update((state) => ({
+      if (requestId !== this.latestRequest) {
+        return;
+      }
+      this._state.update((state) => ({
         ...state,
         status: 'error',
         error: 'The customers could not be loaded. Please try again.',
