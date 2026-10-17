@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { StoragePort } from './storage.port';
+import { StorageChange, StoragePort } from './storage.port';
 
 /**
  * localStorage with an in-memory fallback for non-browser contexts (SSR, tests).
@@ -27,6 +27,23 @@ export class BrowserStorageAdapter implements StoragePort {
     } else {
       this.memoryFallback.delete(key);
     }
+  }
+
+  subscribe(handler: (change: StorageChange) => void): () => void {
+    if (typeof window === 'undefined') {
+      return () => {};
+    }
+
+    const listener = (event: StorageEvent): void => {
+      // Ignore events from a different storage area (e.g. sessionStorage).
+      if (event.storageArea && event.storageArea !== this.backend) {
+        return;
+      }
+      handler({ key: event.key ?? '', value: event.newValue });
+    };
+
+    window.addEventListener('storage', listener);
+    return () => window.removeEventListener('storage', listener);
   }
 
   private resolveBackend(): Storage | null {

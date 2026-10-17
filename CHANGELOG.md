@@ -6,6 +6,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-17
+
+### Added
+
+- `CLOCK` time-source port (`core/time`) with a `SystemClock` default and a
+  `FakeClock` test double, so session expiry is tested by advancing time
+  instead of sleeping.
+- Cross-tab session sync: `StoragePort.subscribe` (browser `storage` event) lets
+  a sign-out or token refresh in one tab propagate to the others.
+- Session hardening (ADR-0007): `restoreSession()` is now idempotent and
+  single-flight, and the proactive expiry timer clamps long delays and re-arms
+  rather than refreshing prematurely.
+
+### Changed
+
+- `AuthSessionService` reads time and schedules timers through `CLOCK` instead
+  of calling `Date.now()` / `setTimeout` directly.
+- `MemoryStorage` and `BrowserStorageAdapter` implement cross-context change
+  notification.
+
+### Fixed
+
+- Sessions whose expiry is beyond the 32-bit `setTimeout` delay (≈24.8 days) no
+  longer trigger an immediate, premature refresh.
+
 ## [1.4.0] - 2026-10-17
 
 ### Added

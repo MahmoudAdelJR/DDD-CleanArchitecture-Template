@@ -151,13 +151,24 @@ Request-level opt-outs live in `core/http/http-context.ts`:
 `AuthSessionService` (`core/services`) owns the session:
 
 - private writable signals, public readonly + computed `isAuthenticated`
-  (false once `expiresAt` has passed)
+  (false once `expiresAt` has passed, measured through the injected `CLOCK`)
 - persisted to the `STORAGE` port (`app.session.v1`) and restored by an
-  `APP_INITIALIZER` — authentication survives page reload
+  `APP_INITIALIZER` — authentication survives page reload. `restoreSession()`
+  is **idempotent and single-flight**, so a duplicated initializer can never
+  trigger a second refresh.
 - proactive expiry timer + reactive 401 refresh, both routed through the
-  single-flight `SESSION_REFRESH_PORT` (implemented today by the fake auth
-  adapter, tomorrow by a real token endpoint)
+  single-flight `SESSION_REFRESH_PORT` (implemented by the demo fake in
+  development, the HTTP identity adapter in production). The timer delay is
+  clamped to `MAX_TIMER_DELAY_MS` (a `setTimeout` overflow guard) and re-armed
+  when it fires early, so long-lived sessions never refresh prematurely.
+- cross-tab sync: `StoragePort.subscribe` surfaces another tab's writes, so a
+  sign-out (or a refreshed token) in one tab is adopted by the others without
+  echoing back.
 - failed refresh or corrupt persisted state clears the session
+
+Time and timers go through the `CLOCK` port (`core/time/clock.port.ts`,
+`SystemClock` default). Specs inject `FakeClock` to advance time instead of
+sleeping. See ADR-0007.
 
 ## Demo vs production composition
 
