@@ -9,8 +9,12 @@ updates:
         patterns:
           - '@angular/*'
           - '@angular-eslint/*'
+        # stay inside the declared range: Angular majors ride `ng update`
+        # in a dedicated PR with an ADR (see docs/CONTRIBUTING.md)
+        versioning: inherit
       development:
         dependency-type: development
+        versioning: inherit
     labels: [dependencies]
 
   - package-ecosystem: github-actions
