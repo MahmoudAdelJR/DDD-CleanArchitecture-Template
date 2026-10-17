@@ -643,6 +643,8 @@ Exit criteria:
 
 **Follow-up (v1.1.0, 2026-10-16): generator hardening.** The generator is now transactional (snapshot → apply → format → verify → commit-or-restore-exact-prior-state; formatting failures abort), validates arguments and route/path collisions pre-flight, patches route arrays through the TypeScript parser (fixes one-line `Routes` corruption and guarantees static-before-`:id`), and executes tools without a shell (no `DEP0190`, no argument injection). `check:architecture` detects stale/duplicate zones, duplicate or mismatched lazy imports, and missing route files. Behavior pinned by 25 integration tests (`npm run test:generator`) running on Ubuntu and Windows in CI. A real-workspace proof run caught a missing `--write` flag in the formatter step — fixed and covered by tests.
 
+**Follow-up (v1.2.0, 2026-10-16): `npm run init:project`.** Transactional, one-time project initializer (package/Angular-project/CI/Docker renames, titles, storage-key namespacing, optional apiBaseUrl/locale/version; `--dry-run` manifest, sentinel-guarded re-runs, full verification inside the transaction with exact-state rollback). Shared `workspace.mjs` now backs both the generator and the initializer. Validated on a disposable clean checkout: post-init project passed typechecks, lint, unit tests and production build with every identifier renamed.
+
 Goal: make correct usage faster than incorrect usage.
 
 - Add generators for features, slices, pages, API clients, and domain workflows.

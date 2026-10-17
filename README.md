@@ -13,12 +13,21 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
 
 ## Start here (adopting the template)
 
-1. Click **Use this template** → _Create a new repository_ (or clone and remove
-   the demo slices later once you know the layout).
-2. Install and run everything once to confirm a green baseline:
+1. Click **Use this template** → _Create a new repository_ (or clone).
+2. Initialize your project identity — one transactional command that renames
+   the package, Angular project, CI/Docker artifact paths, browser/catalog
+   titles, and storage keys, then re-runs every gate (rolling back on any
+   failure):
 
    ```bash
    npm ci
+   npm run init:project -- --name "My Application"   # or run without flags for a prompt
+   npm run init:project -- --name "My App" --dry-run # preview the manifest, write nothing
+   ```
+
+3. Confirm the green baseline is still yours to keep:
+
+   ```bash
    npm run check:architecture
    npm run lint
    npm run typecheck
@@ -27,7 +36,7 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
    npm run e2e
    ```
 
-3. Start the app and explore the demo flows:
+4. Start the app and explore the demo flows:
 
    ```bash
    npm start          # http://localhost:4200
@@ -40,18 +49,16 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
    | admin@demo.local  | Admin123!  | customers read + write |
    | reader@demo.local | Reader123! | customers read only    |
 
-4. Customize before your first real feature:
-   - [ ] App name: `index.html` title, `app.title` in
-         [locale catalogs](src/app/core/i18n/locale-catalog.ts), `package.json`,
-         and the project key in `angular.json` (keep the CI/Docker artifact paths
-         in sync when you rename it)
-   - [ ] Runtime config: `apiBaseUrl`, `trustedOrigins`, locales in
-         [app-config.ts](src/app/core/config/app-config.ts)
+5. Customize what `init:project` deliberately leaves alone:
+   - [ ] Visual branding: favicon, design tokens in `src/styles.scss`, nav labels
+   - [ ] Runtime config beyond `apiBaseUrl`: `trustedOrigins`, `supportedLocales`
+         in [app-config.ts](src/app/core/config/app-config.ts)
    - [ ] Backend: follow [docs/recipes/backend-cutover.md](docs/recipes/backend-cutover.md)
    - [ ] Deployment: [deploy/](deploy/README.md) (nginx reference)
    - [ ] Security contact: [docs/SECURITY.md](docs/SECURITY.md)
+   - [ ] Git remote: point `origin` at your own repository
 
-5. Add your first slice — the generator wires the route, the ESLint boundary
+6. Add your first slice — the generator wires the route, the ESLint boundary
    zone, and re-runs the gates for you:
 
    ```bash
@@ -62,21 +69,23 @@ boundaries are machine-enforced — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE
 
 ## Commands
 
-| Task                                                | Command                                      |
-| --------------------------------------------------- | -------------------------------------------- |
-| Dev server                                          | `npm start`                                  |
-| Production build (bundle budgets enforced)          | `npm run build`                              |
-| Unit tests (interactive)                            | `npm test`                                   |
-| Unit tests + coverage (CI mode)                     | `npm run test:ci`                            |
-| Lint incl. architecture boundaries                  | `npm run lint`                               |
-| Formatting                                          | `npm run format` / `npm run format:check`    |
-| Typecheck app, specs, and e2e                       | `npm run typecheck`                          |
-| E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                |
-| Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--workflow]` |
-| Add a page to an existing slice                     | `npm run gen:page -- orders approve`         |
-| Slice wiring integrity check                        | `npm run check:architecture`                 |
-| Generator integration tests (isolated fixtures)     | `npm run test:generator`                     |
-| Dependency audit gates                              | `npm run audit:ci` + `npm run audit:gate`    |
+| Task                                                | Command                                               |
+| --------------------------------------------------- | ----------------------------------------------------- |
+| Dev server                                          | `npm start`                                           |
+| Production build (bundle budgets enforced)          | `npm run build`                                       |
+| Unit tests (interactive)                            | `npm test`                                            |
+| Unit tests + coverage (CI mode)                     | `npm run test:ci`                                     |
+| Lint incl. architecture boundaries                  | `npm run lint`                                        |
+| Formatting                                          | `npm run format` / `npm run format:check`             |
+| Typecheck app, specs, and e2e                       | `npm run typecheck`                                   |
+| E2E (Playwright, auto-starts a dev server on :4300) | `npm run e2e`                                         |
+| Scaffold a new vertical slice                       | `npm run gen:feature -- orders [--workflow]`          |
+| Add a page to an existing slice                     | `npm run gen:page -- orders approve`                  |
+| Slice wiring integrity check                        | `npm run check:architecture`                          |
+| Initialize project identity (one-time, safe)        | `npm run init:project -- --name "My App" [--dry-run]` |
+| Generator integration tests (isolated fixtures)     | `npm run test:generator`                              |
+| Initializer integration tests                       | `npm run test:init`                                   |
+| Dependency audit gates                              | `npm run audit:ci` + `npm run audit:gate`             |
 
 ## Documentation
 

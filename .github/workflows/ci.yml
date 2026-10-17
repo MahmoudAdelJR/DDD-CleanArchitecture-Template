@@ -93,6 +93,9 @@ jobs:
       - name: Generator + architecture integration tests
         run: npm run test:generator
 
+      - name: Initializer integration tests
+        run: npm run test:init
+
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest

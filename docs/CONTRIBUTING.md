@@ -4,6 +4,7 @@
 
 ```bash
 npm ci
+npm run init:project -- --name "My Application"  # one-time identity rename (dry-run first is fine)
 npm start        # http://localhost:4200
 # demo logins: admin@demo.local / Admin123! · reader@demo.local / Reader123!
 ```
@@ -36,7 +37,7 @@ fixture workspaces; safe to run anywhere).
 - [ ] `npm run test:ci` (coverage line gate ≥ 80%)
 - [ ] `npm run build` (bundle budgets enforced)
 - [ ] `npm run e2e` when flows/UX changed
-- [ ] `npm run test:generator` when `scripts/` changed
+- [ ] `npm run test:generator` and `npm run test:init` when `scripts/` changed
 - [ ] `npm run audit:gate` when dependencies changed
 
 ## PR checklist

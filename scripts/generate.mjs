@@ -13,11 +13,13 @@
  * Imported entry point (runGenerator/checkArchitecture) so integration tests
  * can run it against throwaway fixture workspaces with an injected runner.
  */
-import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
+import { Transaction, defaultRunCommand, makeToolRunner } from './workspace.mjs';
+
+export { defaultRunCommand } from './workspace.mjs';
 
 const MODULE_PATH = fileURLToPath(import.meta.url);
 const DEFAULT_ROOT = resolve(join(dirname(MODULE_PATH), '..'));
@@ -25,28 +27,11 @@ const DEFAULT_ROOT = resolve(join(dirname(MODULE_PATH), '..'));
 const APP_ROUTE_MARKER = '// gen:app-route';
 const ESLINT_MARKER = '// gen:feature-zones';
 
-export class GeneratorError extends Error {
+class GeneratorError extends Error {
   constructor(message) {
     super(message);
     this.name = 'GeneratorError';
   }
-}
-
-const CLI_ENTRY_POINTS = {
-  prettier: join('node_modules', 'prettier', 'bin', 'prettier.cjs'),
-  tsc: join('node_modules', 'typescript', 'bin', 'tsc'),
-  eslint: join('node_modules', 'eslint', 'bin', 'eslint.js'),
-  ng: join('node_modules', '@angular', 'cli', 'bin', 'ng.js'),
-};
-
-/** Runs a checked-in Node CLI entry point with NO shell (no DEP0190, no injection). */
-export function defaultRunCommand(scriptPath, args, cwd) {
-  return spawnSync(process.execPath, [scriptPath, ...args], {
-    cwd,
-    encoding: 'utf8',
-    shell: false,
-    maxBuffer: 32 * 1024 * 1024,
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -125,92 +110,8 @@ function parsePageArgs(args) {
 }
 
 // ---------------------------------------------------------------------------
-// transactional workspace
+// (Transaction + makeToolRunner + defaultRunCommand live in workspace.mjs)
 // ---------------------------------------------------------------------------
-
-class Transaction {
-  constructor(createdRoots = []) {
-    this.patches = [];
-    this.createdFiles = [];
-    this.createdRoots = createdRoots.filter((dir) => existsSync(dir) === false);
-    this.committed = false;
-  }
-
-  patchFile(path, content) {
-    const existed = existsSync(path);
-    this.patches.push({ path, existed, original: existed ? readFileSync(path) : null });
-    writeFileSync(path, content, 'utf8');
-  }
-
-  writeFile(path, content) {
-    mkdirSync(dirname(path), { recursive: true });
-    this.createdFiles.push(path);
-    writeFileSync(path, content, 'utf8');
-  }
-
-  commit() {
-    this.committed = true;
-  }
-
-  /** Restores the exact prior state; returns a list of rollback problems (if any). */
-  rollback() {
-    const problems = [];
-    for (const patch of this.patches) {
-      try {
-        if (patch.existed) writeFileSync(patch.path, patch.original, 'utf8');
-        else rmSync(patch.path, { force: true });
-      } catch (error) {
-        problems.push(`restore ${patch.path}: ${error.message}`);
-      }
-    }
-    for (const file of this.createdFiles) {
-      try {
-        rmSync(file, { force: true });
-      } catch (error) {
-        problems.push(`delete ${file}: ${error.message}`);
-      }
-    }
-    for (const root of this.createdRoots) {
-      try {
-        rmSync(root, { recursive: true, force: true });
-      } catch (error) {
-        problems.push(`remove tree ${root}: ${error.message}`);
-      }
-    }
-    return problems;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// tool execution + verification
-// ---------------------------------------------------------------------------
-
-function makeToolRunner(ctx) {
-  return function runTool(tool, args) {
-    const script =
-      tool === 'checkArchitecture'
-        ? join(ctx.root, 'scripts', 'check-architecture.mjs')
-        : join(ctx.root, CLI_ENTRY_POINTS[tool]);
-    const result = ctx.runCommand(script, args, ctx.root);
-    const describe2 = `${tool} ${args.join(' ')}`;
-    if (result.error) {
-      throw new GeneratorError(`Could not run ${describe2}: ${result.error.message}`);
-    }
-    if (result.signal || result.status === null || result.status === undefined) {
-      throw new GeneratorError(
-        `${describe2} was terminated${result.signal ? ` by signal ${result.signal}` : ''}.`,
-      );
-    }
-    if (result.status !== 0) {
-      const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-      const tail = output.length > 3000 ? `…(output truncated)…\n${output.slice(-3000)}` : output;
-      throw new GeneratorError(
-        `Verification step FAILED: ${describe2} (exit ${result.status})\n${tail}`,
-      );
-    }
-    return result;
-  };
-}
 
 function verify(ctx, runTool) {
   const steps = [

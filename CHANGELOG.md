@@ -6,6 +6,35 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-16
+
+### Added
+
+- **`npm run init:project`** — one-time, transactional project initializer for
+  template consumers. Renames the npm package, Angular project (and the CI +
+  Docker artifact paths derived from it), browser title, both locale catalogs'
+  `app.title`, namespaced session/language storage keys, and the README/Docker
+  docs; optionally sets `apiBaseUrl`, `default-locale` (syncs `index.html`
+  lang), and the consumer app version (default `0.1.0`). Supports `--dry-run`
+  (exact change manifest), interactive prompting when `--name` is omitted, and
+  refuses re-runs via a `project.init.json` sentinel unless `--force`.
+  Verification (format, architecture, typechecks, lint, unit tests, build) runs
+  inside the transaction — any failure restores every file exactly and removes
+  the sentinel. Proven end-to-end on a disposable clean checkout:
+  `Use this template → npm ci → init:project` produced a fully renamed,
+  all-gates-green project.
+- `npm run test:init` — 6 initializer integration suites on temporary fixture
+  workspaces (rename correctness, options, dry-run, re-run refusal, rollback,
+  input validation); added to the Windows/Linux CI matrix job.
+- Shared `scripts/workspace.mjs`: the transactional editor, no-shell tool
+  runner, and error type now power the generator and the initializer alike.
+
+### Changed
+
+- README adoption flow now leads with `init:project`; the manual "rename
+  everything" checklist became opt-in branding guidance (favicon, tokens,
+  git remote, security contact).
+
 ## [1.1.0] - 2026-10-16
 
 ### Added
@@ -87,7 +116,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   ADRs, contributing and security docs, recipes (backend cutover, feature
   flags, SSR, PWA). MIT-licensed.
 
-[unreleased]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/MahmoudAdelJR/DDD-CleanArchitecture-Template/releases/tag/v1.0.0
