@@ -43,12 +43,12 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/common": "^20.3.34",
-    "@angular/compiler": "^20.3.34",
-    "@angular/core": "^20.3.34",
-    "@angular/forms": "^20.3.34",
-    "@angular/platform-browser": "^20.3.34",
-    "@angular/router": "^20.3.34",
+    "@angular/common": "^22.2.3",
+    "@angular/compiler": "^22.2.3",
+    "@angular/core": "^22.2.3",
+    "@angular/forms": "^22.2.3",
+    "@angular/platform-browser": "^22.2.3",
+    "@angular/router": "^22.2.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
